@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bookz</title>
+<meta name="theme-color" content="#EEEEF0">
+<meta name="description" content="Bookz — трекер чтения: списки, сессии, цитаты и размышления">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bookz">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700&family=Lora:ital,wght@1,400&display=swap">
+<style>
+/* Layout: mobile column (max 430px) on a grey page; white 24–28px cards without shadows; floating dark capsule tab bar; bottom sheets over a 45% scrim. Light only (Bookz · Light). */
+:root{
+  --bg-page:#EEEEF0; --bg-card:#FFFFFF; --bg-subtle:#F5F5F7; --bg-inverse:#17171A; --bg-disabled:#E8E8EC;
+  --lav-50:#F3F0FC; --lav-100:#E4DDF8; --lav-200:#D2C7F3; --lav-400:#AE9BEA; --violet:#6B52C8;
+  --pink-100:#F8E1F1; --pink-300:#EDB8DF;
+  --t-primary:#17171A; --t-secondary:#6B6B74; --t-tertiary:#9A9AA3; --t-brand:#5B43B8; --t-inverse:#FFFFFF; --t-disabled:#A3A3AC;
+  --i-brand:#6B52C8; --i-muted:#8A8A93; --i-inverse:#FFFFFF; --i-primary:#17171A;
+  --b-subtle:#E6E6EA; --b-focus:#6B52C8;
+  --error:#C8372D; --error-bg:#FCEBEA; --warn:#9A5A06; --warn-bg:#FDF2DF; --warn-b:#E7A93B;
+  --scrim:rgba(23,23,26,.45);
+  --heat0:#F0EFF3; --heat1:#E4DDF8; --heat2:#C8BBF0; --heat3:#9E88E4; --heat4:#6B52C8;
+  --r8:8px; --r12:12px; --r16:16px; --r20:20px; --r24:24px; --r28:28px; --rf:999px;
+  --font:"Mulish",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --quote:"Lora",Georgia,"Times New Roman",serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+html,body{background:var(--bg-page)}
+body{color:var(--t-primary);font:400 15px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg-page)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--b-focus);outline-offset:2px}
+p{margin:0}
+.app{max-width:430px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(120px + env(safe-area-inset-bottom,0px))}
+.gate{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:24px}
+.gate .logo{width:96px;height:96px;border-radius:24px;background:url(icons/icon-192.png) center/cover}
+.rich img:not([src]),.thumbs img:not([src]){min-height:120px;background:var(--bg-subtle)}
+.sync-dot{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--t-tertiary)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;align-items:center;gap:8px}
+.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+
+/* type */
+.t-l{font-size:28px;line-height:1.2;font-weight:600;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.t-m{font-size:22px;line-height:1.25;font-weight:600;margin:0;text-wrap:balance}
+.t-s{font-size:17px;line-height:1.3;font-weight:600;margin:0}
+.b-l{font-size:17px;line-height:1.45}
+.b-m{font-size:15px;line-height:1.45}
+.b-mm{font-size:15px;line-height:1.4;font-weight:600}
+.cap{font-size:13px;line-height:1.4}
+.capm{font-size:13px;line-height:1.4;font-weight:600}
+.micro{font-size:11px;line-height:1.3}
+.num-xl{font-size:48px;line-height:1.1;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.num-l{font-size:32px;line-height:1.15;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.q{font-family:var(--quote);font-style:italic;font-size:17px;line-height:1.45}
+.q-l{font-family:var(--quote);font-style:italic;font-size:21px;line-height:1.45}
+.sec{color:var(--t-secondary)} .ter{color:var(--t-tertiary)} .brand{color:var(--t-brand)} .inv{color:var(--t-inverse)}
+.clamp2,.clamp3,.clamp4,.clamp6{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
+.clamp2{-webkit-line-clamp:2}.clamp3{-webkit-line-clamp:3}.clamp4{-webkit-line-clamp:4}.clamp6{-webkit-line-clamp:6}
+
+/* icons */
+.ic{width:24px;height:24px;flex:none;display:inline-block}
+.ic svg{width:100%;height:100%;display:block;fill:none}
+.ic-18{width:18px;height:18px}.ic-20{width:20px;height:20px}
+
+/* cards & controls */
+.card{background:var(--bg-card);border-radius:var(--r24);padding:20px}
+.card-28{border-radius:var(--r28)}
+.ibtn{width:44px;height:44px;border-radius:var(--rf);border:0;display:grid;place-items:center;flex:none;color:var(--i-brand);background:var(--bg-card);transition:transform .15s}
+.ibtn:active{transform:scale(.94)}
+.ibtn.inverse{background:var(--bg-inverse);color:var(--i-inverse)}
+.ibtn.lav{background:var(--lav-100);color:var(--i-brand)}
+.ibtn.subtle{background:var(--bg-subtle);color:var(--i-brand)}
+.ibtn:disabled{background:var(--bg-disabled);color:var(--t-disabled);cursor:default}
+.btn{height:50px;border-radius:var(--rf);border:0;padding:0 20px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;white-space:nowrap;transition:transform .15s,opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn.m{height:44px;padding:0 16px}
+.btn.primary{background:var(--bg-inverse);color:var(--t-inverse)}
+.btn.secondary{background:var(--bg-card);color:var(--t-primary)}
+.btn.lav{background:var(--lav-100);color:var(--t-primary)}
+.btn.lav .ic,.btn.secondary .ic{color:var(--i-brand)}
+.btn.subtle{background:var(--bg-subtle);color:var(--t-primary)}
+.btn.subtle .ic{color:var(--i-brand)}
+.btn:disabled{background:var(--bg-disabled);color:var(--t-disabled);cursor:default;transform:none}
+.btn.block{width:100%}
+.btn .ic{width:20px;height:20px}
+.chip{height:40px;border-radius:var(--rf);border:0;padding:0 16px;background:var(--bg-card);color:var(--t-primary);font-size:15px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:none}
+.on-card .chip,.chip.sub{background:var(--bg-subtle)}
+.chip[aria-pressed="true"]{background:var(--bg-inverse);color:var(--t-inverse)}
+.chip .ic{width:18px;height:18px}
+.hscroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px;scroll-padding-inline:16px}
+.hscroll::-webkit-scrollbar{display:none}
+.wrap{display:flex;flex-wrap:wrap;gap:8px}
+.seg{display:flex;background:var(--bg-subtle);border-radius:var(--rf);padding:4px;gap:2px}
+.seg.on-page{background:var(--bg-card)}
+.seg button{flex:1;height:36px;border:0;border-radius:var(--rf);background:none;color:var(--t-secondary);font-size:13px;white-space:nowrap;padding:0 10px}
+.seg button[aria-pressed="true"]{background:var(--bg-inverse);color:var(--t-inverse);font-weight:600}
+.tag{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:var(--rf);font-size:13px;font-weight:600;background:var(--lav-100);color:var(--t-brand)}
+.tag.white{background:var(--bg-card);color:var(--t-primary);font-weight:400}
+.bar{height:6px;border-radius:var(--rf);background:var(--bg-card);overflow:hidden}
+.bar.sub{background:var(--bg-subtle)}
+.bar i{display:block;height:100%;background:var(--bg-inverse);border-radius:var(--rf)}
+.bar.violet i{background:var(--violet)}
+.label{font-size:13px;color:var(--t-secondary);margin-bottom:8px;display:block}
+.field{display:flex;align-items:center;gap:8px;min-height:56px;border-radius:var(--r16);background:var(--bg-subtle);padding:0 16px;border:1.5px solid transparent;transition:border-color .15s,background .15s}
+.field:focus-within{background:var(--bg-card);border-color:var(--b-focus)}
+.field input,.field textarea{flex:1;min-width:0;border:0;outline:0;background:none;font-size:17px;padding:14px 0}
+.field textarea{resize:none;min-height:96px;line-height:1.45}
+.field.q-field textarea{font-family:var(--quote);font-style:italic}
+.field .suf{color:var(--t-tertiary);font-size:15px;white-space:nowrap}
+.field.err{border-color:var(--error);background:var(--error-bg)}
+.field.warn{border-color:var(--warn-b);background:var(--warn-bg)}
+.hint{font-size:13px;margin-top:6px;color:var(--t-tertiary)}
+.hint.brand{color:var(--t-brand)} .hint.err{color:var(--error)} .hint.warn{color:var(--warn)}
+input::placeholder,textarea::placeholder{color:var(--t-tertiary)}
+
+/* cover */
+.cover{position:relative;width:40px;height:56px;border-radius:6px;flex:none;overflow:hidden;background:var(--lav-200)}
+.cover::before{content:"";position:absolute;left:0;top:0;bottom:0;width:14%;background:rgba(255,255,255,.35)}
+.cover::after{content:"";position:absolute;left:28%;top:18%;width:48%;height:3px;border-radius:2px;background:rgba(255,255,255,.55);box-shadow:0 7px 0 -0.5px rgba(255,255,255,.55)}
+.cover.l{width:96px;height:134px;border-radius:12px}
+.cover.l::after{height:5px;box-shadow:0 12px 0 -1px rgba(255,255,255,.55)}
+.cover.pink{background:var(--pink-300)} .cover.violet{background:var(--heat3)} .cover.ink{background:var(--bg-inverse)}
+
+/* tab bar */
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:15;background:var(--bg-inverse);border-radius:var(--rf);padding:6px;display:flex;gap:4px;box-shadow:0 8px 24px rgba(23,23,26,.18)}
+.tabbar button{width:56px;height:56px;border-radius:var(--rf);border:0;background:none;color:var(--i-muted);display:grid;place-items:center}
+.tabbar button[aria-current="page"]{background:var(--lav-200);color:var(--i-primary)}
+
+/* home */
+.hello{display:flex;align-items:flex-start;gap:8px;padding:8px 0 4px}
+.week .days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:16px}
+.day{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-radius:var(--rf);border:1.5px solid transparent}
+.day .micro{color:var(--t-tertiary)}
+.day b{font-weight:400;font-size:17px;font-variant-numeric:tabular-nums}
+.day.read{background:var(--lav-200)}
+.day.today{border-color:var(--bg-inverse)}
+.day.today.read{background:var(--bg-inverse);color:var(--t-inverse)}
+.day.today.read .micro{color:rgba(255,255,255,.7)}
+.day.future{opacity:.45}
+.hero{position:relative;overflow:hidden;background:var(--lav-100);border-radius:var(--r28);padding:20px;min-height:260px}
+.hero .art{position:absolute;right:-10px;top:-24px;width:230px;height:230px;background-size:cover;pointer-events:none}
+.hero .art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--lav-100) 0,rgba(228,221,248,0) 35%),linear-gradient(0deg,var(--lav-100) 0,rgba(228,221,248,0) 30%)}
+.hero>*:not(.art){position:relative}
+.pill{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:var(--rf);background:var(--bg-card);font-size:13px;font-weight:600}
+.hero-actions{display:flex;gap:8px;margin-top:16px}
+.hero-actions .btn{flex:1;background:var(--bg-card);color:var(--t-primary)}
+.hero-actions .btn .ic{color:var(--i-brand)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.goal-ring{position:relative;width:104px;height:104px;margin:12px auto 8px}
+.goal-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.goal-ring .c{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.15}
+.series{background:var(--bg-inverse);color:var(--t-inverse);border-radius:var(--r24);padding:20px;display:flex;flex-direction:column;justify-content:space-between;min-height:100%}
+.series .ibtn{background:var(--lav-200);color:var(--i-primary);width:40px;height:40px}
+.tile{background:var(--bg-subtle);border-radius:var(--r20);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tile .dot{width:40px;height:40px;border-radius:var(--rf);background:var(--bg-card);display:grid;place-items:center;color:var(--i-brand)}
+.heat{display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(7,auto);grid-auto-flow:column;gap:4px}
+.heat i{aspect-ratio:1;border-radius:4px;background:var(--heat0)}
+.heat i.l1{background:var(--heat1)}.heat i.l2{background:var(--heat2)}.heat i.l3{background:var(--heat3)}.heat i.l4{background:var(--heat4)}
+.heat i.fut{background:transparent}
+.legend{display:flex;align-items:center;gap:4px;margin-top:10px;font-size:13px;color:var(--t-tertiary)}
+.legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.qcard{flex:none;width:272px;height:232px;background:var(--bg-card);border-radius:var(--r24);padding:20px;display:flex;flex-direction:column;gap:16px;border:0;text-align:left}
+.qcard .q{flex:1}
+.qicon{width:44px;height:44px;border-radius:var(--rf);background:var(--lav-50);display:grid;place-items:center;color:var(--i-brand);flex:none}
+
+/* lists */
+.listcard{background:var(--lav-100);border-radius:var(--r28);padding:20px}
+.listcard .chip{background:var(--bg-card)}
+.search{display:flex;align-items:center;gap:8px;height:48px;border-radius:var(--rf);background:var(--bg-card);padding:0 16px;flex:1;min-width:0;color:var(--i-muted)}
+.search input{border:0;outline:0;background:none;flex:1;min-width:0;font-size:15px;color:var(--t-primary)}
+.grp-h{display:flex;justify-content:space-between;align-items:baseline;padding:8px 4px 0}
+.blist{background:var(--bg-card);border-radius:var(--r24);overflow:hidden}
+.brow{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 6px;border-bottom:1px solid var(--b-subtle);min-height:64px}
+.brow:last-child{border-bottom:0}
+.brow .st{width:44px;height:44px;border:0;background:none;padding:0;flex:none;display:grid;place-items:center}
+.brow .st svg{width:44px;height:44px}
+.brow .main{flex:1;min-width:0;border:0;background:none;text-align:left;padding:4px 0;display:flex;align-items:center;gap:8px}
+.brow .main .ic{color:var(--i-muted);width:20px;height:20px}
+
+/* book */
+.bk-head{display:flex;gap:16px;align-items:flex-start;margin-top:12px}
+.ring{position:relative;width:96px;height:96px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.15}
+.stars{display:flex;gap:6px}
+.stars button{border:0;background:none;padding:2px;width:36px;height:36px;color:var(--violet)}
+.stars svg{width:32px;height:32px}
+.note{background:var(--lav-50);border-radius:var(--r16);padding:12px 16px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;font-size:15px}
+.kv span:first-child{color:var(--t-secondary)}
+.kv span:last-child{text-align:right;font-weight:600}
+.bars{display:flex;align-items:flex-end;gap:4px;height:96px;margin-top:12px}
+.bars i{flex:1;border-radius:6px 6px 2px 2px;background:var(--lav-200);min-height:3px}
+.bars i.zero{background:var(--b-subtle);height:3px!important}
+.bars i.last{background:var(--violet)}
+
+/* journal */
+.entry{background:var(--bg-card);border-radius:var(--r24);padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;border:0;text-align:left;width:100%}
+.e-head{display:flex;gap:10px;align-items:center}
+.e-ico{width:36px;height:36px;border-radius:var(--r12);background:var(--lav-50);display:grid;place-items:center;color:var(--i-brand);flex:none}
+.e-ico .ic{width:20px;height:20px}
+.thumbs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.thumbs img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:var(--r16);background:var(--bg-subtle);display:block}
+.thumbs.one{grid-template-columns:1fr 1fr}
+.day-h{display:flex;align-items:baseline;gap:8px;padding:12px 4px 0}
+mark{background:var(--lav-200);color:inherit;border-radius:3px;padding:0 1px}
+.rich{color:var(--t-primary);overflow-wrap:anywhere}
+.rich p{margin:0 0 8px} .rich>*:last-child{margin-bottom:0}
+.rich h3{font-size:17px;font-weight:600;margin:8px 0 4px}
+.rich ul,.rich ol{margin:0 0 8px;padding-left:22px}
+.rich blockquote{margin:0 0 8px;padding:2px 0 2px 12px;border-left:3px solid var(--lav-200);font-family:var(--quote);font-style:italic}
+.rich img{display:block;max-width:100%;border-radius:var(--r16);margin:8px 0}
+.empty{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 8px;color:var(--t-secondary)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:30;animation:fade .2s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;margin:0 auto;max-width:430px;max-height:92vh;max-height:92dvh;background:var(--bg-card);border-radius:var(--r28) var(--r28) 0 0;display:flex;flex-direction:column;animation:up .25s cubic-bezier(.2,.8,.2,1)}
+.sheet .handle{width:40px;height:5px;border-radius:3px;background:var(--b-subtle);margin:8px auto 4px}
+.sheet .s-head.none{display:none}
+.sheet .s-head{display:flex;align-items:center;gap:12px;padding:8px 16px 12px}
+.sheet .s-body{overflow-y:auto;padding:4px 16px 16px;display:flex;flex-direction:column;gap:20px;overscroll-behavior:contain}
+.sheet .s-foot{padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.opt{display:flex;align-items:center;gap:12px;padding:6px 12px 6px 6px;border-radius:var(--r16);border:0;background:none;width:100%;text-align:left;font-size:15px}
+.opt.sel{background:var(--lav-50)}
+.opt svg{width:44px;height:44px;flex:none}
+.opt .ic.chk{margin-left:auto;color:var(--i-brand)}
+.pick{display:flex;align-items:center;gap:12px;padding:10px 4px;border:0;background:none;width:100%;text-align:left;border-bottom:1px solid var(--b-subtle)}
+.bookfield{display:flex;align-items:center;gap:12px;padding:12px 16px 12px 12px;border-radius:var(--r20);background:var(--bg-subtle);border:1.5px solid transparent;width:100%;text-align:left}
+.bookfield.err{border-color:var(--error);background:var(--error-bg)}
+.bookfield .ic{color:var(--i-muted)}
+.editor{border-radius:var(--r16);border:1.5px solid var(--b-subtle);background:var(--bg-card);overflow:hidden}
+.editor:focus-within{border-color:var(--b-focus)}
+.editor.err{border-color:var(--error)}
+.e-bar{display:flex;gap:2px;padding:6px;background:var(--bg-subtle);flex-wrap:wrap}
+.e-bar button{width:36px;height:36px;border:0;border-radius:var(--r8);background:none;color:var(--i-brand);display:grid;place-items:center}
+.e-bar button[aria-pressed="true"]{background:var(--lav-100)}
+.e-area{min-height:140px;max-height:40vh;overflow-y:auto;padding:12px 16px;outline:0;font-size:17px;line-height:1.45}
+.e-area:empty::before{content:attr(data-ph);color:var(--t-tertiary)}
+.e-area p{margin:0 0 8px} .e-area h3{font-size:17px;font-weight:600;margin:0 0 4px}
+.e-area ul,.e-area ol{margin:0 0 8px;padding-left:22px}
+.e-area blockquote{margin:0 0 8px;padding-left:12px;border-left:3px solid var(--lav-200);font-family:var(--quote);font-style:italic}
+.e-area img{max-width:100%;border-radius:var(--r12);display:block;margin:6px 0}
+.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px}
+.act{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;color:var(--t-secondary);padding:4px}
+.act span.ib{width:48px;height:48px;border-radius:var(--rf);background:var(--bg-subtle);display:grid;place-items:center;color:var(--i-brand)}
+.act.danger{color:var(--error)} .act.danger span.ib{background:var(--error-bg);color:var(--error)}
+.celebrate{position:fixed;inset:0;z-index:30;background:var(--lav-100);overflow-y:auto;animation:fade .25s}
+.celebrate .in{max-width:430px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px))}
+.celebrate .art{height:300px;margin:0 -16px;background-size:cover;background-position:center 30%;position:relative}
+.celebrate .art::after{content:"";position:absolute;inset:auto 0 0;height:90px;background:linear-gradient(0deg,var(--lav-100),rgba(228,221,248,0))}
+.celebrate .x{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;z-index:2}
+.artcard{height:150px;border-radius:var(--r24);background-size:cover;background-position:center 35%}
+.stepper{background:var(--bg-subtle);border-radius:var(--r24);padding:20px 16px;display:flex;align-items:center;gap:12px}
+.stepper .ibtn{background:var(--bg-card)}
+.sum{background:var(--lav-50);border-radius:var(--r20);padding:12px 16px}
+.sum.amb{background:var(--warn-bg)}
+.sum .kv{padding:6px 0;font-size:13px}
+.sum .kv span:last-child{font-weight:600}
+.sum .kv.pace{border-top:1px solid var(--lav-200);margin-top:4px;padding-top:10px;font-size:15px;color:var(--t-brand)}
+.sum.amb .kv.pace{border-color:var(--warn-b);color:var(--warn)}
+.feat{background:var(--lav-100);border-radius:var(--r24);padding:16px;display:flex;gap:16px;align-items:center;border:0;text-align:left;width:100%}
+.rchips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.cmp{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.cmp th{font-size:13px;font-weight:400;color:var(--t-tertiary);text-align:right;padding:0 0 8px}
+.cmp td{padding:8px 0;border-top:1px solid var(--b-subtle);text-align:right}
+.cmp td:first-child,.cmp th:first-child{text-align:left;color:var(--t-secondary)}
+.cmp td.now{color:var(--t-brand);font-weight:600}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .wd{font-size:13px;color:var(--t-tertiary);text-align:center;padding-bottom:4px}
+.cal button{aspect-ratio:1;border:0;border-radius:var(--r12);background:var(--bg-subtle);font-size:15px;font-variant-numeric:tabular-nums;color:var(--t-primary)}
+.cal button.l1{background:var(--heat1)}.cal button.l2{background:var(--heat2)}.cal button.l3{background:var(--heat3);color:#fff}.cal button.l4{background:var(--heat4);color:#fff}
+.cal button.today{background:var(--bg-inverse);color:#fff}
+.cal button.sel{outline:2px solid var(--violet);outline-offset:1px}
+.cal button:disabled{opacity:.35;cursor:default}
+.scope{background:var(--bg-subtle);border-radius:var(--r20);overflow:hidden}
+.scope button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;text-align:left;padding:12px 16px;border-bottom:1px solid var(--b-subtle)}
+.scope button:last-child{border-bottom:0}
+.scope .ic{color:var(--i-muted)}
+.heat i[data-day]{cursor:pointer}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(108px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--bg-inverse);color:var(--t-inverse);border-radius:var(--rf);padding:8px 16px 8px 8px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);font-size:15px;animation:up .25s;box-shadow:0 8px 24px rgba(23,23,26,.2)}
+.toast .ok{width:32px;height:32px;border-radius:var(--rf);background:var(--lav-200);display:grid;place-items:center;color:var(--i-primary);flex:none}
+.toast.err .ok{background:var(--error-bg);color:var(--error)}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:var(--r16);padding:10px 14px;font-size:13px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app" id="view"></div>
+<nav class="tabbar" id="tabbar" aria-label="Разделы"></nav>
+<div id="sheets"></div>
+<div id="toastRoot"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ================= Data: books ================= */
+const RAW = {
+classics: `Эпос о Гильгамеше|автор неизвестен|-1200|Ближний Восток
+Илиада|Гомер|-750|Античность
+Одиссея|Гомер|-720|Античность
+Орестея|Эсхил|-458|Античность
+Царь Эдип|Софокл|-429|Античность
+Медея|Еврипид|-431|Античность
+Махабхарата (Бхагавадгита)|автор неизвестен|-300|Азия
+Энеида|Вергилий|-19|Античность
+Метаморфозы|Овидий|8|Античность
+Тысяча и одна ночь|автор неизвестен|900|Ближний Восток
+Повесть о Гэндзи|Мурасаки Сикибу|1010|Азия
+Шахнаме|Фирдоуси|1010|Ближний Восток
+Слово о полку Игореве|автор неизвестен|1187|Россия
+Витязь в тигровой шкуре|Шота Руставели|1190|Кавказ
+Песнь о Нибелунгах|автор неизвестен|1200|Европа
+Божественная комедия|Данте Алигьери|1320|Европа
+Декамерон|Джованни Боккаччо|1353|Европа
+Кентерберийские рассказы|Джеффри Чосер|1400|Европа
+Троецарствие|Ло Гуаньчжун|1400|Азия
+Гаргантюа и Пантагрюэль|Франсуа Рабле|1532|Европа
+Путешествие на Запад|У Чэнъэнь|1592|Азия
+Гамлет|Уильям Шекспир|1601|Европа
+Дон Кихот|Мигель де Сервантес|1605|Европа
+Король Лир|Уильям Шекспир|1606|Европа
+Макбет|Уильям Шекспир|1606|Европа
+Тартюф|Мольер|1664|Европа
+Потерянный рай|Джон Мильтон|1667|Европа
+Федра|Жан Расин|1677|Европа
+Робинзон Крузо|Даниель Дефо|1719|Европа
+Путешествия Гулливера|Джонатан Свифт|1726|Европа
+Кандид|Вольтер|1759|Европа
+Тристрам Шенди|Лоренс Стерн|1767|Европа
+Страдания юного Вертера|Иоганн Вольфганг Гёте|1774|Европа
+Сон в красном тереме|Цао Сюэцинь|1791|Азия
+Фауст|Иоганн Вольфганг Гёте|1808|Европа
+Гордость и предубеждение|Джейн Остин|1813|Европа
+Красное и чёрное|Стендаль|1830|Европа
+Собор Парижской Богоматери|Виктор Гюго|1831|Европа
+Евгений Онегин|Александр Пушкин|1833|Россия
+Отец Горио|Оноре де Бальзак|1835|Европа
+Капитанская дочка|Александр Пушкин|1836|Россия
+Герой нашего времени|Михаил Лермонтов|1840|Россия
+Мёртвые души|Николай Гоголь|1842|Россия
+Граф Монте-Кристо|Александр Дюма|1844|Европа
+Джейн Эйр|Шарлотта Бронте|1847|Европа
+Грозовой перевал|Эмили Бронте|1847|Европа
+Ярмарка тщеславия|Уильям Теккерей|1848|Европа
+Дэвид Копперфилд|Чарльз Диккенс|1850|Европа
+Алая буква|Натаниэль Готорн|1850|Америка
+Моби Дик|Герман Мелвилл|1851|Америка
+Госпожа Бовари|Гюстав Флобер|1857|Европа
+Обломов|Иван Гончаров|1859|Россия
+Большие надежды|Чарльз Диккенс|1861|Европа
+Отверженные|Виктор Гюго|1862|Европа
+Отцы и дети|Иван Тургенев|1862|Россия
+Преступление и наказание|Фёдор Достоевский|1866|Россия
+Идиот|Фёдор Достоевский|1869|Россия
+Война и мир|Лев Толстой|1869|Россия
+Миддлмарч|Джордж Элиот|1872|Европа
+Анна Каренина|Лев Толстой|1877|Россия
+Кукольный дом|Генрик Ибсен|1879|Европа
+Братья Карамазовы|Фёдор Достоевский|1880|Россия
+Приключения Гекльберри Финна|Марк Твен|1884|Америка
+Жерминаль|Эмиль Золя|1885|Европа
+Смерть Ивана Ильича|Лев Толстой|1886|Россия
+Портрет Дориана Грея|Оскар Уайльд|1890|Европа
+Дама с собачкой и другие рассказы|Антон Чехов|1899|Россия
+Сердце тьмы|Джозеф Конрад|1899|Европа
+Будденброки|Томас Манн|1901|Европа
+Вишнёвый сад|Антон Чехов|1904|Россия
+В поисках утраченного времени|Марсель Пруст|1913|Европа
+Превращение|Франц Кафка|1915|Европа
+Мы|Евгений Замятин|1920|Россия
+Улисс|Джеймс Джойс|1922|Европа
+Волшебная гора|Томас Манн|1924|Европа
+Процесс|Франц Кафка|1925|Европа
+Миссис Дэллоуэй|Вирджиния Вулф|1925|Европа
+Великий Гэтсби|Фрэнсис Скотт Фицджеральд|1925|Америка
+Степной волк|Герман Гессе|1927|Европа
+На Западном фронте без перемен|Эрих Мария Ремарк|1929|Европа
+Шум и ярость|Уильям Фолкнер|1929|Америка
+Котлован|Андрей Платонов|1930|Россия
+Человек без свойств|Роберт Музиль|1930|Европа
+Дар|Владимир Набоков|1938|Россия
+Тихий Дон|Михаил Шолохов|1940|Россия
+Посторонний|Альбер Камю|1942|Европа
+Игра в бисер|Герман Гессе|1943|Европа
+Вымыслы|Хорхе Луис Борхес|1944|Латинская Америка
+Мост на Дрине|Иво Андрич|1945|Европа
+Чума|Альбер Камю|1947|Европа
+Снежная страна|Ясунари Кавабата|1948|Азия
+1984|Джордж Оруэлл|1949|Европа
+Над пропастью во ржи|Джером Д. Сэлинджер|1951|Америка
+Старик и море|Эрнест Хемингуэй|1952|Америка
+Лолита|Владимир Набоков|1955|Америка
+Педро Парамо|Хуан Рульфо|1955|Латинская Америка
+Золотой храм|Юкио Мисима|1956|Азия
+Доктор Живаго|Борис Пастернак|1957|Россия
+И пришло разрушение|Чинуа Ачебе|1958|Африка
+Один день Ивана Денисовича|Александр Солженицын|1962|Россия
+Игра в классики|Хулио Кортасар|1963|Латинская Америка
+Мастер и Маргарита|Михаил Булгаков|1967|Россия
+Сто лет одиночества|Габриэль Гарсиа Маркес|1967|Латинская Америка
+Бойня номер пять|Курт Воннегут|1969|Америка
+Москва — Петушки|Венедикт Ерофеев|1970|Россия
+Жизнь и судьба|Василий Гроссман|1980|Россия
+Имя розы|Умберто Эко|1980|Европа
+Дети полуночи|Салман Рушди|1981|Азия
+Невыносимая лёгкость бытия|Милан Кундера|1984|Европа
+Возлюбленная|Тони Моррисон|1987|Америка
+Остаток дня|Кадзуо Исигуро|1989|Европа
+Слепота|Жозе Сарамаго|1995|Европа
+Хроники заводной птицы|Харуки Мураками|1995|Азия`,
+philosophy: `Фрагменты|Гераклит|-500|2
+Беседы и суждения|Конфуций|-450|1
+Дао дэ цзин|Лао-цзы|-400|2
+Апология Сократа|Платон|-399|1
+Пир|Платон|-385|1
+Федон|Платон|-380|2
+Государство|Платон|-375|2
+Никомахова этика|Аристотель|-340|2
+Политика|Аристотель|-330|2
+Метафизика|Аристотель|-330|3
+Чжуан-цзы|Чжуан Чжоу|-300|2
+Письмо к Менекею и Главные мысли|Эпикур|-300|1
+Дхаммапада|буддийский канон|-250|1
+О природе вещей|Лукреций|-55|2
+Нравственные письма к Луцилию|Сенека|64|1
+Энхиридион|Эпиктет|125|1
+Наедине с собой|Марк Аврелий|175|1
+Эннеады|Плотин|270|3
+Исповедь|Аврелий Августин|400|2
+О граде Божьем|Аврелий Августин|426|3
+Утешение философией|Боэций|524|1
+Опровержение опровержения|Ибн Рушд (Аверроэс)|1180|3
+Путеводитель растерянных|Маймонид|1190|3
+Сумма теологии (избранное)|Фома Аквинский|1274|3
+Речь о достоинстве человека|Джованни Пико делла Мирандола|1486|2
+Похвала глупости|Эразм Роттердамский|1511|1
+Утопия|Томас Мор|1516|1
+Государь|Никколо Макиавелли|1532|1
+Опыты|Мишель де Монтень|1580|1
+Новый органон|Фрэнсис Бэкон|1620|2
+Рассуждение о методе|Рене Декарт|1637|1
+Размышления о первой философии|Рене Декарт|1641|2
+Левиафан|Томас Гоббс|1651|2
+Мысли|Блез Паскаль|1670|1
+Богословско-политический трактат|Бенедикт Спиноза|1670|2
+Этика|Бенедикт Спиноза|1677|3
+Два трактата о правлении|Джон Локк|1689|2
+Опыт о человеческом разумении|Джон Локк|1690|2
+Трактат о принципах человеческого знания|Джордж Беркли|1710|2
+Монадология|Готфрид Лейбниц|1714|2
+Исследование о человеческом познании|Дэвид Юм|1748|2
+О духе законов|Шарль Монтескьё|1748|2
+Теория нравственных чувств|Адам Смит|1759|2
+Об общественном договоре|Жан-Жак Руссо|1762|1
+Эмиль, или О воспитании|Жан-Жак Руссо|1762|1
+Диалоги о естественной религии|Дэвид Юм|1779|2
+Критика чистого разума|Иммануил Кант|1781|3
+Ответ на вопрос: что такое Просвещение?|Иммануил Кант|1784|1
+Основоположение к метафизике нравов|Иммануил Кант|1785|2
+Феноменология духа|Георг Гегель|1807|3
+Мир как воля и представление|Артур Шопенгауэр|1818|2
+Философические письма|Пётр Чаадаев|1836|1
+Доверие к себе|Ральф Уолдо Эмерсон|1841|1
+Или — или|Сёрен Кьеркегор|1843|2
+Страх и трепет|Сёрен Кьеркегор|1843|2
+Манифест коммунистической партии|Карл Маркс, Фридрих Энгельс|1848|1
+Афоризмы житейской мудрости|Артур Шопенгауэр|1851|1
+Уолден, или Жизнь в лесу|Генри Дэвид Торо|1854|1
+О свободе|Джон Стюарт Милль|1859|1
+Утилитаризм|Джон Стюарт Милль|1863|1
+Капитал, том I|Карл Маркс|1867|3
+Так говорил Заратустра|Фридрих Ницше|1885|2
+По ту сторону добра и зла|Фридрих Ницше|1886|2
+К генеалогии морали|Фридрих Ницше|1887|2
+Оправдание добра|Владимир Соловьёв|1897|2
+Многообразие религиозного опыта|Уильям Джеймс|1902|2
+Прагматизм|Уильям Джеймс|1907|1
+Проблемы философии|Бертран Рассел|1912|1
+Логико-философский трактат|Людвиг Витгенштейн|1921|3
+Я и Ты|Мартин Бубер|1923|2
+Бытие и время|Мартин Хайдеггер|1927|3
+Восстание масс|Хосе Ортега-и-Гассет|1930|1
+Картезианские размышления|Эдмунд Гуссерль|1931|3
+Миф о Сизифе|Альбер Камю|1942|1
+Бытие и ничто|Жан-Поль Сартр|1943|3
+Открытое общество и его враги|Карл Поппер|1945|2
+История западной философии|Бертран Рассел|1945|1
+Феноменология восприятия|Морис Мерло-Понти|1945|3
+Экзистенциализм — это гуманизм|Жан-Поль Сартр|1946|1
+Сказать жизни «Да!» (Человек в поисках смысла)|Виктор Франкл|1946|1
+Диалектика Просвещения|Макс Хоркхаймер, Теодор Адорно|1947|3
+Самопознание|Николай Бердяев|1949|1
+Второй пол|Симона де Бовуар|1949|2
+Бунтующий человек|Альбер Камю|1951|2
+Истоки тоталитаризма|Ханна Арендт|1951|2
+Философские исследования|Людвиг Витгенштейн|1953|3
+Мифологии|Ролан Барт|1957|1
+Структура научных революций|Томас Кун|1962|2
+Банальность зла. Эйхман в Иерусалиме|Ханна Арендт|1963|1
+Теория справедливости|Джон Ролз|1971|3
+Каково быть летучей мышью?|Томас Нагель|1974|2
+Анархия, государство и утопия|Роберт Нозик|1974|2
+Надзирать и наказывать|Мишель Фуко|1975|2
+Освобождение животных|Питер Сингер|1975|1
+Иметь или быть?|Эрих Фромм|1976|1
+После добродетели|Аласдер Макинтайр|1981|2
+Симулякры и симуляция|Жан Бодрийяр|1981|2
+Мир Софии|Юстейн Гордер|1991|1
+Объяснённое сознание|Дэниел Деннет|1991|2
+Сознающий ум|Дэвид Чалмерс|1996|3`,
+english: `Harry Potter and the Philosopher's Stone|J. K. Rowling|1997|B2|f
+The Hobbit|J. R. R. Tolkien|1937|B2|f
+Animal Farm|George Orwell|1945|B2|f
+Of Mice and Men|John Steinbeck|1937|B2|f
+The Old Man and the Sea|Ernest Hemingway|1952|B2|f
+And Then There Were None|Agatha Christie|1939|B2|f
+The Murder of Roger Ackroyd|Agatha Christie|1926|B2|f
+The Adventures of Sherlock Holmes|Arthur Conan Doyle|1892|B2|f
+Strange Case of Dr Jekyll and Mr Hyde|Robert Louis Stevenson|1886|B2|f
+The Importance of Being Earnest|Oscar Wilde|1895|B2|f
+The Curious Incident of the Dog in the Night-Time|Mark Haddon|2003|B2|f
+Fahrenheit 451|Ray Bradbury|1953|B2|f
+Flowers for Algernon|Daniel Keyes|1966|B2|f
+Lord of the Flies|William Golding|1954|B2|f
+The Catcher in the Rye|J. D. Salinger|1951|B2|f
+To Kill a Mockingbird|Harper Lee|1960|B2|f
+Nineteen Eighty-Four|George Orwell|1949|B2|f
+The Great Gatsby|F. Scott Fitzgerald|1925|B2|f
+Slaughterhouse-Five|Kurt Vonnegut|1969|B2|f
+The Hitchhiker's Guide to the Galaxy|Douglas Adams|1979|B2|f
+Never Let Me Go|Kazuo Ishiguro|2005|B2|f
+Klara and the Sun|Kazuo Ishiguro|2021|B2|f
+The Kite Runner|Khaled Hosseini|2003|B2|f
+Life of Pi|Yann Martel|2001|B2|f
+The Road|Cormac McCarthy|2006|B2|f
+Station Eleven|Emily St. John Mandel|2014|B2|f
+The Martian|Andy Weir|2011|B2|f
+Project Hail Mary|Andy Weir|2021|B2|f
+Gone Girl|Gillian Flynn|2012|B2|f
+Eleanor Oliphant Is Completely Fine|Gail Honeyman|2017|B2|f
+Normal People|Sally Rooney|2018|B2|f
+Down and Out in Paris and London|George Orwell|1933|B2|n
+Hiroshima|John Hersey|1946|B2|n
+Don't Make Me Think|Steve Krug|2000|B2|n
+On Writing|Stephen King|2000|B2|n
+Bird by Bird|Anne Lamott|1994|B2|n
+Kitchen Confidential|Anthony Bourdain|2000|B2|n
+Complications|Atul Gawande|2002|B2|n
+Stiff|Mary Roach|2003|B2|n
+A Short History of Nearly Everything|Bill Bryson|2003|B2|n
+The Checklist Manifesto|Atul Gawande|2009|B2|n
+The Immortal Life of Henrietta Lacks|Rebecca Skloot|2010|B2|n
+Sapiens|Yuval Noah Harari|2011|B2|n
+Quiet|Susan Cain|2012|B2|n
+Being Mortal|Atul Gawande|2014|B2|n
+Do No Harm|Henry Marsh|2014|B2|n
+When Breath Becomes Air|Paul Kalanithi|2016|B2|n
+Born a Crime|Trevor Noah|2016|B2|n
+This Is Going to Hurt|Adam Kay|2017|B2|n
+Educated|Tara Westover|2018|B2|n
+Atomic Habits|James Clear|2018|B2|n
+The Body|Bill Bryson|2019|B2|n
+The Design of Everyday Things|Don Norman|1988|C1|n
+Inspired|Marty Cagan|2008|C1|n
+The Man Who Mistook His Wife for a Hat|Oliver Sacks|1985|C1|n
+The Selfish Gene|Richard Dawkins|1976|C1|n
+Ways of Seeing|John Berger|1972|C1|n
+In Cold Blood|Truman Capote|1966|C1|n
+Guns, Germs, and Steel|Jared Diamond|1997|C1|n
+The Emperor of All Maladies|Siddhartha Mukherjee|2010|C1|n
+Thinking, Fast and Slow|Daniel Kahneman|2011|C1|n
+The Righteous Mind|Jonathan Haidt|2012|C1|n
+Mortality|Christopher Hitchens|2012|C1|n
+The Gene: An Intimate History|Siddhartha Mukherjee|2016|C1|n
+Pride and Prejudice|Jane Austen|1813|C1|f
+Frankenstein|Mary Shelley|1818|C1|f
+Jane Eyre|Charlotte Brontë|1847|C1|f
+Wuthering Heights|Emily Brontë|1847|C1|f
+Great Expectations|Charles Dickens|1861|C1|f
+The Picture of Dorian Gray|Oscar Wilde|1890|C1|f
+Heart of Darkness|Joseph Conrad|1899|C1|f
+Dubliners|James Joyce|1914|C1|f
+Brave New World|Aldous Huxley|1932|C1|f
+Rebecca|Daphne du Maurier|1938|C1|f
+The Grapes of Wrath|John Steinbeck|1939|C1|f
+Brideshead Revisited|Evelyn Waugh|1945|C1|f
+East of Eden|John Steinbeck|1952|C1|f
+Pnin|Vladimir Nabokov|1957|C1|f
+Catch-22|Joseph Heller|1961|C1|f
+The Handmaid's Tale|Margaret Atwood|1985|C1|f
+The Remains of the Day|Kazuo Ishiguro|1989|C1|f
+The Secret History|Donna Tartt|1992|C1|f
+White Teeth|Zadie Smith|2000|C1|f
+Atonement|Ian McEwan|2001|C1|f
+The Corrections|Jonathan Franzen|2001|C1|f
+Cloud Atlas|David Mitchell|2004|C1|f
+Saturday|Ian McEwan|2005|C1|f
+A Little Life|Hanya Yanagihara|2015|C1|f
+Hamlet|William Shakespeare|1601|C2|f
+Macbeth|William Shakespeare|1606|C2|f
+Moby-Dick|Herman Melville|1851|C2|f
+Middlemarch|George Eliot|1871|C2|f
+Ulysses|James Joyce|1922|C2|f
+Mrs Dalloway|Virginia Woolf|1925|C2|f
+To the Lighthouse|Virginia Woolf|1927|C2|f
+The Sound and the Fury|William Faulkner|1929|C2|f
+Lolita|Vladimir Nabokov|1955|C2|f
+A Clockwork Orange|Anthony Burgess|1962|C2|f
+Blood Meridian|Cormac McCarthy|1985|C2|f
+Beloved|Toni Morrison|1987|C2|f
+Infinite Jest|David Foster Wallace|1996|C2|f
+Wolf Hall|Hilary Mantel|2009|C2|f
+Lincoln in the Bardo|George Saunders|2017|C2|f`
+};
+
+
+const LISTS=[
+ {key:'classics',prefix:'c',name:'Величайшие произведения',desc:'Мировая художественная литература от эпоса о Гильгамеше до конца XX века, русская классика наравне с остальными. По умолчанию — в хронологическом порядке'},
+ {key:'philosophy',prefix:'p',name:'Философия',desc:'Хронологический маршрут от досократиков до философии сознания. Точки — сложность: ● можно начинать, ●●● лучше после вводных текстов той же эпохи'},
+ {key:'english',prefix:'e',name:'На английском',desc:'Чтение в оригинале для прокачки языка: от B2 к C2 — проза и нон-фикшн, в том числе о медицине и дизайне'}
+];
+const LIST=Object.fromEntries(LISTS.map(l=>[l.key,l]));
+const ERAS={
+ classics:[['Древность','до V века',y=>y<500],['Средние века','V–XV века',y=>y<1500],['XVI–XVIII век','',y=>y<1800],['XIX век','',y=>y<1900],['XX век','',y=>y<2000],['XXI век','',()=>true]],
+ philosophy:[['Античность','до V века',y=>y<500],['Средневековье','V–XV века',y=>y<1500],['Новое время','XVI–XVIII века',y=>y<1800],['XIX век','',y=>y<1900],['XX–XXI век','',()=>true]],
+ english:[['B2','уверенный уровень'],['C1','продвинутый'],['C2','свободный']]
+};
+const BASE=[];
+for(const l of LISTS){ RAW[l.key].trim().split('\n').forEach((line,i)=>{ const p=line.split('|'); const b={id:l.prefix+(i+1),list:l.key,t:p[0],a:p[1],y:+p[2],pos:i+1,ord:i};
+  if(l.key==='classics') b.region=p[3]; if(l.key==='philosophy') b.diff=+p[3]; if(l.key==='english'){ b.level=p[3]; b.kind=p[4]==='n'?'nf':'fic'; } BASE.push(b); }); }
+const BASE_BY_ID=Object.fromEntries(BASE.map(b=>[b.id,b]));
+function eraOf(b){ const e=ERAS[b.list]; if(b.list==='english') return b.level||'B2'; if(!b.y) return e[e.length-1][0]; for(const [n,,f] of e) if(f(b.y)) return n; return e[e.length-1][0]; }
+const fmtYear=y=>!y?'':y<0?`ок. ${-y} до н. э.`:y<1000?`ок. ${y}`:String(y);
+const DIFF=['','легко','средне','сложно'];
+function bookMeta(b){ const parts=[b.a, fmtYear(b.y)]; if(b.region) parts.push(b.region); if(b.diff) parts.push(DIFF[b.diff]); if(b.level) parts.push(b.level+(b.kind==='nf'?' · нон-фикшн':'')); return parts.filter(Boolean).join(' · '); }
+const coverColor=b=>['violet','pink','lav'][(b.pos||0)%3];
+
+const HERO='data:image/webp;base64,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';
+const EMPTY='data:image/webp;base64,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';
+/* ================= Helpers ================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today=()=>ymd(new Date());
+const parseYmd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const addDays=(s,n)=>{const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d);};
+const MON_G=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MON_S=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+const MON_IN=['январе','феврале','марте','апреле','мае','июне','июле','августе','сентябре','октябре','ноябре','декабре'];
+const dLong=s=>{const d=parseYmd(s);return `${d.getDate()} ${MON_G[d.getMonth()]}`;};
+const dShort=s=>{const d=parseYmd(s);return `${d.getDate()} ${MON_S[d.getMonth()]}`;};
+function plural(n,a,b,c){ n=Math.abs(n)%100; const n1=n%10; if(n>10&&n<20) return c; if(n1>1&&n1<5) return b; if(n1===1) return a; return c; }
+const fmtMin=m=>m<60?`${m} мин`:(m%60&&m<600?`${Math.floor(m/60)} ч ${m%60} мин`:`${Math.round(m/60)} ч`);
+const fmtMinShort=m=>m<60?`${m} мин`:`${Math.round(m/60)} ч`;
+const dec=x=>(Math.round(x*10)/10).toString().replace('.',',');
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* icons (Iconly Light, 1.5px) */
+const ICON_PATHS={
+ search:[['M11.2754 2.71423C16.003 2.71423 19.8364 6.54661 19.8364 11.2752C19.8364 16.0038 16.003 19.8361 11.2754 19.8361C6.54686 19.8361 2.71448 16.0038 2.71448 11.2752C2.71448 6.54661 6.54686 2.71423 11.2754 2.71423Z'],['M19.899 18.4875C20.678 18.4875 21.3095 19.1199 21.3095 19.898C21.3095 20.678 20.678 21.3095 19.899 21.3095C19.1199 21.3095 18.4875 20.678 18.4875 19.898C18.4875 19.1199 19.1199 18.4875 19.899 18.4875Z']],
+ plus:[['M6 12H18'],['M12 6V18']],
+ 'chevron-left':[['M15.5 19L8.5 12L15.5 5']],
+ 'chevron-right':[['M8.5 5L15.5 12L8.5 19']],
+ 'chevron-down':[['M5 8.5L12 15.5L19 8.5']],
+ 'arrow-right':[['M19.75 11.7257H4.75'],['M13.7002 5.70129L19.7502 11.7253L13.7002 17.7503']],
+ flash:[['M18.2998 6.4022L19.4478 5.34766'],['M18.6367 16.8008L19.8098 17.8274'],['M5.35263 6.39431L4.19043 5.35547'],['M6.15187 17.3125L4.98145 18.3421'],['M6.18707 12.4133L9.89035 3.3772C9.97346 3.15062 10.1892 3 10.4305 3H15.395C15.7921 3 16.0698 3.39271 15.9375 3.76709L13.742 8.91982C13.6097 9.2942 13.8874 9.68691 14.2845 9.68691H18.9723C19.4668 9.68691 19.7309 10.2695 19.405 10.6414L10.5042 20.8009C10.1032 21.2586 9.35873 20.8615 9.51555 20.2735L11.2123 13.9104C11.3097 13.5452 11.0344 13.1868 10.6564 13.1868H6.72722C6.32726 13.1868 6.04932 12.7888 6.18707 12.4133Z']],
+ document:[['M14.7378 2.76175H8.0848C6.0048 2.75378 4.2998 4.41178 4.2508 6.49078V17.2038C4.2048 19.3168 5.8798 21.0678 7.9928 21.1148C8.0238 21.1148 8.0538 21.1158 8.0848 21.1148H16.0738C18.1678 21.0298 19.8178 19.2998 19.8029 17.2038V8.03778L14.7378 2.76175Z'],['M14.4751 2.75V5.659C14.4751 7.079 15.6231 8.23 17.0431 8.234H19.7981'],['M14.2881 15.3585H8.88806'],['M12.2432 11.606H8.88721']],
+ clock:[['M21.2498 12.0005C21.2498 17.1095 17.1088 21.2505 11.9998 21.2505C6.89082 21.2505 2.74982 17.1095 2.74982 12.0005C2.74982 6.89149 6.89082 2.75049 11.9998 2.75049C17.1088 2.75049 21.2498 6.89149 21.2498 12.0005Z'],['M15.4314 14.9429L11.6614 12.6939V7.84689']],
+ quote:[['M7.25583 5.92578C5.33233 7.30541 3.90406 9.36122 3.28332 11.6457C2.84745 13.2471 2.83967 15.0792 3.79606 16.4354C4.71257 17.7343 6.47845 18.3657 8.00985 17.9415C10.8061 17.1681 11.7148 13.6139 9.82438 11.489C9.10538 10.6795 8.05169 10.1775 6.97075 10.1289C7.39009 8.98372 7.99623 7.90765 8.75707 6.95515C8.25795 6.6117 7.75786 6.26728 7.25583 5.92578Z'],['M17.4355 5.92578C15.512 7.30541 14.0837 9.36122 13.463 11.6457C13.0271 13.2471 13.0194 15.0792 13.9758 16.4354C14.8923 17.7343 16.6581 18.3657 18.1895 17.9415C20.9858 17.1681 21.8945 13.6139 20.0041 11.489C19.2851 10.6795 18.2314 10.1775 17.1504 10.1289C17.5698 8.98372 18.1759 7.90765 18.9368 6.95515C18.4376 6.6117 17.9375 6.26728 17.4355 5.92578Z']],
+ home:[['M9.15722 20.7714V17.7047C9.1572 16.9246 9.79312 16.2908 10.581 16.2856H13.4671C14.2587 16.2856 14.9005 16.9209 14.9005 17.7047V20.7809C14.9003 21.4432 15.4343 21.9845 16.103 22H18.0271C19.9451 22 21.5 20.4607 21.5 18.5618V9.83784C21.4898 9.09083 21.1355 8.38935 20.538 7.93303L13.9577 2.6853C12.8049 1.77157 11.1662 1.77157 10.0134 2.6853L3.46203 7.94256C2.86226 8.39702 2.50739 9.09967 2.5 9.84736V18.5618C2.5 20.4607 4.05488 22 5.97291 22H7.89696C8.58235 22 9.13797 21.4499 9.13797 20.7714']],
+ bookmark:[['M19.7389 6.15368C19.7389 3.40281 17.8582 2.30005 15.1504 2.30005H8.79149C6.16693 2.30005 4.20001 3.32762 4.20001 5.97022V20.694C4.20001 21.4198 4.98096 21.877 5.61355 21.5221L11.9955 17.9422L18.3223 21.5161C18.9559 21.873 19.7389 21.4158 19.7389 20.689V6.15368Z'],['M8.27118 9.02808H15.5895']],
+ journal:[['M13.7474 20.4429H21'],['M12.78 3.79479C13.5557 2.86779 14.95 2.73186 15.8962 3.49173C15.9485 3.53296 17.6295 4.83879 17.6295 4.83879C18.669 5.46719 18.992 6.80311 18.3494 7.82259C18.3153 7.87718 8.81195 19.7645 8.81195 19.7645C8.49578 20.1589 8.01583 20.3918 7.50291 20.3973L3.86353 20.443L3.04353 16.9723C2.92866 16.4843 3.04353 15.9718 3.3597 15.5773L12.78 3.79479Z'],['M11.0208 6.00085L16.4731 10.188']],
+ close:[['M6 6L18 18'],['M18 6L6 18']],
+ type:[['M5.04492 7.46796V5H18.9545V7.46796'],['M11.9334 5V19M8.89648 18.9998H15.1021']],
+ bold:[['M7.29199 5H11.8035C13.6314 5 15.2641 6.33613 15.4374 8.15613C15.636 10.2439 13.9997 12 11.954 12H7.29199V5Z'],['M7.29199 12H13.0574C14.8852 12 16.5171 13.3361 16.6912 15.1561C16.8899 17.2439 15.2536 19 13.2079 19H7.29199V12Z']],
+ italic:[['M13.0005 19H10.0001H7M17.0004 5H13.9997H11.0007'],['M10 19L13.9996 5']],
+ underline:[['M6 19H17.9997'],['M16.0001 5V10.9999C16.0001 13.2101 14.209 14.9995 12.0005 14.9995C9.79112 14.9995 8 13.2101 8 10.9999V5']],
+ 'list-bullet':[['M8 17.9961H20.0006'],['M8 11.9961H20.0006'],['M8 5.99609H20.0006'],['M4 6H4.01'],['M4 12.12H4.01'],['M4 18H4.01']],
+ 'list-number':[['M4 16.0003C4 14.8959 4.89506 14 6.00027 14C7.10462 14 7.99968 14.8959 7.99968 16.0003C7.99968 16.4811 7.78608 17.2144 7.05014 17.8769C6.31419 18.5385 4.30873 20 4.30873 20H7.99968'],['M6.00041 9.99909V4L4.15234 5.48831'],['M11.334 6H20.0001M11.334 11.9995H20.0001M11.334 17.999H20.0001']],
+ image:[['M21.21 7.89924V16.0502C21.21 19.0702 19.32 21.2002 16.3 21.2002H7.65C4.63 21.2002 2.75 19.0702 2.75 16.0502V7.89924C2.75 4.87924 4.64 2.75024 7.65 2.75024H16.3C19.32 2.75024 21.21 4.87924 21.21 7.89924Z'],['M5.28131 16.4309L6.80931 14.8179C7.34031 14.2549 8.22531 14.2279 8.78931 14.7579C8.80631 14.7749 9.72631 15.7099 9.72631 15.7099C10.2813 16.2749 11.1883 16.2839 11.7533 15.7299C11.7903 15.6939 14.0873 12.9079 14.0873 12.9079C14.6793 12.1889 15.7423 12.0859 16.4623 12.6789C16.5103 12.7189 18.6803 14.9459 18.6803 14.9459'],['M10.3126 9.13315C10.3126 10.1022 9.5276 10.8872 8.5586 10.8872C7.5896 10.8872 6.8046 10.1022 6.8046 9.13315C6.8046 8.16415 7.5896 7.37915 8.5586 7.37915C9.5276 7.38015 10.3126 8.16415 10.3126 9.13315Z']],
+ filter:[['M10.3301 16.5929H4.02942'],['M13.1405 6.90039H19.4412'],['M8.72629 6.84625C8.72629 5.5506 7.66813 4.5 6.36314 4.5C5.05816 4.5 4 5.5506 4 6.84625C4 8.14191 5.05816 9.19251 6.36314 9.19251C7.66813 9.19251 8.72629 8.14191 8.72629 6.84625Z'],['M20 16.5538C20 15.2581 18.9426 14.2075 17.6376 14.2075C16.3318 14.2075 15.2737 15.2581 15.2737 16.5538C15.2737 17.8494 16.3318 18.9 17.6376 18.9C18.9426 18.9 20 17.8494 20 16.5538Z']],
+ check:[['M19 6.85547C13.5636 9.48764 10.2433 14.2837 8.72078 17.1442C7.74399 15.5051 6.50533 14.0476 5 12.7764']],
+ book:[['M20.6857 6.83545V17.1635C20.7305 19.236 19.0881 20.9533 17.0157 20.999C16.9855 20.999 8.6267 21 8.6267 21C6.58638 21.0078 4.91481 19.3819 4.86617 17.3426V6.83545C4.82044 4.76302 6.46379 3.04573 8.53621 3.00097C8.56638 3 17.0293 3 17.0293 3C19.0823 3.0827 20.7003 4.77956 20.6857 6.83545Z'],['M3.31445 16.697H6.64007M3.31445 11.9984H6.64007M3.31445 7.30078H6.64007']],
+ more:[['M12.0002 2.75012C17.1082 2.75012 21.2502 6.89112 21.2502 12.0001C21.2502 17.1081 17.1082 21.2501 12.0002 21.2501C6.8912 21.2501 2.7502 17.1081 2.7502 12.0001C2.7502 6.89212 6.8922 2.75012 12.0002 2.75012Z'],['M15.9394 12.0131H15.9484'],['M11.9304 12.0131H11.9394'],['M7.9214 12.0131H7.9304']],
+ calendar:[['M3.09265 9.4043H20.9166'],['M16.4421 13.3097H16.4513'],['M12.0046 13.3097H12.0139'],['M7.55789 13.3097H7.56716'],['M16.4421 17.1962H16.4513'],['M12.0046 17.1962H12.0139'],['M7.55789 17.1962H7.56716'],['M16.0437 2V5.29078'],['M7.96552 2V5.29078'],['M16.2383 3.57922H7.77096C4.83427 3.57922 3 5.21516 3 8.22225V17.2719C3 20.3263 4.83427 22 7.77096 22H16.229C19.175 22 21 20.3546 21 17.3475V8.22225C21.0092 5.21516 19.1842 3.57922 16.2383 3.57922Z']]
+};
+const ICONS=Object.fromEntries(Object.entries(ICON_PATHS).map(([k,ps])=>[k,`<svg viewBox="0 0 24 24">${ps.map(([d])=>`<path d="${d}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</svg>`]));
+const STATUS_SVG={
+ read:'<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="6" y="6" width="32" height="32" rx="16" fill="#6B52C8"/><path d="M27.25 18.1416C23.1727 20.1157 20.6825 23.7128 19.5406 25.8581C18.808 24.6288 17.879 23.5357 16.75 22.5823" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ reading:'<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="6" y="6" width="32" height="32" rx="16" fill="#D2C7F3"/><path d="M28.5143 18.1266V25.8726C28.5479 27.427 27.3161 28.715 25.7618 28.7493C25.7391 28.7493 19.47 28.75 19.47 28.75C17.9398 28.7558 16.6861 27.5364 16.6496 26.0069V18.1266C16.6153 16.5723 17.8478 15.2843 19.4022 15.2507C19.4248 15.25 25.772 15.25 25.772 15.25C27.3117 15.312 28.5252 16.5847 28.5143 18.1266Z" stroke="#17171A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.4858 25.5228H17.9801M15.4858 21.9988H17.9801M15.4858 18.4756H17.9801" stroke="#17171A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ want:'<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="6" y="6" width="32" height="32" rx="16" fill="#F3F0FC"/><path d="M27.8042 17.6153C27.8042 15.5522 26.3937 14.7251 24.3628 14.7251H19.5936C17.6252 14.7251 16.15 15.4958 16.15 17.4777V28.5206C16.15 29.0649 16.7357 29.4078 17.2102 29.1416L21.9966 26.4567L26.7417 29.1371C27.2169 29.4048 27.8042 29.0619 27.8042 28.5168V17.6153Z" stroke="#6B52C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.2034 19.771H24.6921" stroke="#6B52C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ dropped:'<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="6" y="6" width="32" height="32" rx="16" fill="#F5F5F7"/><path d="M17.5 17.5L26.5 26.5" stroke="#8A8A93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M26.5 17.5L17.5 26.5" stroke="#8A8A93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ none:'<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="6.75" y="6.75" width="30.5" height="30.5" rx="15.25" stroke="#D2C7F3" stroke-width="1.5" stroke-dasharray="4 3"/></svg>'
+};
+
+const I=(n,cls='')=>`<span class="ic ${cls}" aria-hidden="true">${ICONS[n]||''}</span>`;
+const STATUS_ICON=k=>STATUS_SVG[k]||STATUS_SVG.none;
+const STAR=(on)=>`<svg viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.5l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="${on?'#6B52C8':'none'}" stroke="#6B52C8" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+
+/* ================= State & storage ================= */
+let docs={};
+const KINDS=new Set(['book','session','quote','reflection','goal','meta']);
+let mode='loading';
+const ui={view:'home', prevView:'home', bookId:null, list:'classics', q:'', era:'all', fStatus:'all', fRegion:'all', sort:'chrono', jBook:'all', jKind:'all', jSearch:null, statPeriod:'month', weekOffset:0, bookTab:'quote', readingSel:null, jDay:null, cal:null};
+(function(){ const h=location.hash.slice(1); if(['home','lists','journal'].includes(h)) ui.view=h; })();
+
+const SB_URL='https://lehmxqwpwccuuvcnobyk.supabase.co', SB_KEY='sb_publishable_ZXdHyYSClHPESnf9ICv48g_YTTDdmEc', OWNER='anna1310surgeon@gmail.com';
+const IMG_BASE=SB_URL+'/storage/v1/object/public/images/';
+const CK='bookz-cache-v1';
+let sb=null, me=null, outbox={}, since='1970-01-01T00:00:00Z', flushing=false;
+function loadCache(){ try{ const c=JSON.parse(localStorage.getItem(CK)||'null'); if(c){ docs=c.docs||{}; outbox=c.outbox||{}; since=c.since||since; return true; } }catch(e){} return false; }
+function saveCache(){ try{ localStorage.setItem(CK,JSON.stringify({docs,outbox,since})); }catch(e){} }
+function persist(id){ outbox[id]=Date.now(); saveCache(); flush(); }
+const setDoc=(id,v)=>{ docs[id]=v; persist(id); };
+const delDoc=id=>{ delete docs[id]; persist(id); };
+async function flush(){
+  if(!sb||!me||flushing||!navigator.onLine) return; const ids=Object.keys(outbox); if(!ids.length) return;
+  flushing=true; const stamps={...outbox};
+  try{ const rows=ids.map(id=>docs[id]?{user_id:me,id,data:docs[id],deleted:false}:{user_id:me,id,data:null,deleted:true});
+    const {error}=await sb.from('docs').upsert(rows,{onConflict:'user_id,id'});
+    if(error) throw error;
+    for(const id of ids) if(outbox[id]===stamps[id]) delete outbox[id]; saveCache(); if(mode==='offline'){ mode='cloud'; render(); }
+  }catch(e){ if(navigator.onLine) toast('Не получилось синхронизировать — попробую ещё раз','err'); }
+  finally{ flushing=false; if(Object.keys(outbox).some(id=>outbox[id]!==stamps[id])) setTimeout(flush,300); }
+}
+function applyRow(r){ if(!r||!r.id) return; if(r.updated_at&&r.updated_at>since) since=r.updated_at; if(outbox[r.id]) return; if(r.deleted||!r.data) delete docs[r.id]; else if(KINDS.has(r.data.kind)) docs[r.id]=r.data; }
+async function pull(){ if(!sb||!me) return; let from=since; for(let page=0;page<20;page++){ const {data,error}=await sb.from('docs').select('id,data,deleted,updated_at').gt('updated_at',from).order('updated_at').limit(500); if(error){ mode='offline'; render(); return; } for(const r of data) applyRow(r); if(data.length<500) break; from=data[data.length-1].updated_at; } saveCache(); render(); refreshSheet(); }
+async function initStore(){
+  const had=loadCache(); render();
+  const m=location.hash.match(/k=([A-Za-z0-9_-]{20,})/); if(m){ try{ localStorage.setItem('bookz-k',m[1]); }catch(e){} history.replaceState(null,'',location.pathname+'#home'); }
+  if(!window.supabase){ mode=had?'offline':'nokey'; render(); return; }
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'bookz-auth'}});
+  let {data:{session}}=await sb.auth.getSession();
+  if(!session){ let k=null; try{ k=localStorage.getItem('bookz-k'); }catch(e){}
+    if(!k){ mode=had?'offline':'nokey'; render(); return; }
+    const r=await sb.auth.signInWithPassword({email:OWNER,password:k});
+    if(r.error){ mode=navigator.onLine?(had?'offline':'badkey'):(had?'offline':'nokey'); render(); return; }
+    session=r.data.session; }
+  me=session.user.id; mode=navigator.onLine?'cloud':'offline';
+  await pull(); flush();
+  sb.channel('docs-'+me).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'user_id=eq.'+me},p=>{ applyRow(p.new); saveCache(); render(); refreshSheet(); }).subscribe();
+  addEventListener('online',()=>{ mode='cloud'; render(); pull(); flush(); });
+  addEventListener('offline',()=>{ mode='offline'; render(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ pull(); flush(); } });
+}
+/* ================= Derived data ================= */
+const customBooks=()=>Object.values(docs).filter(d=>d.kind==='book'&&d.custom).map(d=>({id:d.bookId,list:d.custom.list,t:d.custom.t,a:d.custom.a||'',y:d.custom.y||0,region:d.custom.region,level:d.custom.list==='english'?(d.custom.level||'B2'):undefined,pos:0,ord:10000+(d.c||0),custom:true}));
+const allBooks=()=>BASE.concat(customBooks());
+const bookById=id=>BASE_BY_ID[id]||customBooks().find(b=>b.id===id);
+const booksOf=list=>allBooks().filter(b=>b.list===list);
+const bdoc=id=>docs['bk_'+id];
+const status=id=>(bdoc(id)?.status)||'none';
+const readings=id=>bdoc(id)?.readings||[];
+const curReading=id=>{ const r=readings(id); return r.length?r[r.length-1]:null; };
+const ofKind=k=>Object.entries(docs).filter(([,v])=>v.kind===k).map(([id,v])=>({id,...v}));
+const byTime=(a,b)=>(a.date||'').localeCompare(b.date||'')||(a.c||0)-(b.c||0);
+const sessions=(bookId,readingId)=>ofKind('session').filter(s=>(!bookId||s.bookId===bookId)&&(!readingId||s.readingId===readingId)).sort(byTime);
+const quotes=bookId=>ofKind('quote').filter(q=>!bookId||q.bookId===bookId).sort(byTime);
+const reflections=bookId=>ofKind('reflection').filter(q=>!bookId||q.bookId===bookId).sort(byTime);
+function lastPage(bookId){ const r=curReading(bookId); if(!r) return 0; const ss=sessions(bookId,r.id); return ss.length?ss[ss.length-1].pageTo:(r.page||0); }
+const gain=s=>Math.max(0,(s.pageTo||0)-(s.pageFrom||0));
+function readingBooks(){ return allBooks().filter(b=>status(b.id)==='reading').sort((a,b)=>(bdoc(b.id).u||0)-(bdoc(a.id).u||0)); }
+function updBook(id,fn){ const d=bdoc(id)?JSON.parse(JSON.stringify(bdoc(id))):{kind:'book',bookId:id,status:'none',readings:[]}; fn(d); d.u=Date.now(); setDoc('bk_'+id,d); }
+function allEntries(){ return [...sessions().map(e=>({...e,type:'session'})),...quotes().map(e=>({...e,type:'quote'})),...reflections().map(e=>({...e,type:'reflection'}))]; }
+function streak(){ const days=new Set(allEntries().map(e=>e.date)); let d=today(); if(!days.has(d)) d=addDays(d,-1); let n=0; while(days.has(d)){ n++; d=addDays(d,-1); } return n; }
+function readDoneIn(year){ let n=0; for(const d of Object.values(docs)) if(d.kind==='book') for(const r of d.readings||[]) if(r.finishedAt&&r.finishedAt.startsWith(String(year))) n++; return n; }
+function nextBook(){ for(const l of LISTS){ const bs=booksOf(l.key); const w=bs.find(b=>status(b.id)==='want'); if(w) return w; } const bs=booksOf('classics'); let lastRead=-1; bs.forEach((b,i)=>{ if(['read','dropped'].includes(status(b.id))) lastRead=i; }); return bs.slice(lastRead+1).find(b=>status(b.id)==='none')||bs[0]; }
+function forecast(bookId){ const r=curReading(bookId); if(!r||!r.pagesTotal) return null; const ss=sessions(bookId,r.id); const pages=ss.reduce((s,x)=>s+gain(x),0); const days=new Set(ss.map(s=>s.date)).size; if(!pages||!days) return null; const left=r.pagesTotal-lastPage(bookId); if(left<=0) return null; return addDays(today(),Math.ceil(left/(pages/days))); }
+
+function firstActivity(){ const ents=allEntries().map(e=>e.date).concat(Object.values(docs).filter(d=>d.kind==='book').flatMap(d=>(d.readings||[]).map(r=>r.startedAt).filter(Boolean))); return ents.sort()[0]||today(); }
+function goalCalc(target,Y=new Date().getFullYear()){ const now=new Date(); const done=readDoneIn(Y); const end=new Date(Y+1,0,1); const wl=Math.max(1,(end-now)/(7*864e5)); const first=parseYmd(firstActivity()); const weeksUsed=Math.max(1,(now-first)/(7*864e5));
+  const left=Math.max(0,(target||0)-done), need=left/wl, avg=done/weeksUsed; const plan=target?target*((now-first)/(end-first)):0;
+  let state='normal'; if(!target) state='unset'; else if(done>=target) state='done'; else if(done>0&&need>=2*avg&&weeksUsed>2) state='behind'; else if(done>0&&done-plan>=1) state='ahead';
+  return {Y,target,done,left,need,avg,weeksLeft:Math.round(wl),ahead:Math.floor(done-plan),state}; }
+function paceText(need,withTail){ if(need<=0) return 'уже выполнена'; let t; if(need>=0.95){ const r=Math.round(need*10)/10; t=Number.isInteger(r)?`≈${r} ${plural(r,'книга','книги','книг')} в неделю`:`≈${dec(r)} в неделю`; } else { const w=Math.round(1/need); t=`≈1 книга в ${w} ${plural(w,'неделю','недели','недель')}`; } return t+(withTail?' до конца года':''); }
+const ORD=['Первая','Вторая','Третья','Четвёртая','Пятая','Шестая','Седьмая','Восьмая','Девятая','Десятая','Одиннадцатая','Двенадцатая'];
+/* ================= Render: shell ================= */
+const ESC_TABS=[['home','Главная','home'],['lists','Списки','bookmark'],['journal','Дневник','journal']];
+function renderTabbar(){ $('tabbar').innerHTML=ESC_TABS.map(([k,l,ic])=>`<button type="button" data-go="${k}" aria-label="${l}" ${ui.view===k||(ui.view==='book'&&ui.prevView===k)?'aria-current="page"':''}>${I(ic)}</button>`).join(''); }
+function render(){
+  renderTabbar();
+  if((mode==='nokey'||mode==='badkey')&&!Object.keys(docs).length){ $('tabbar').hidden=true; $('view').innerHTML=`<div class="gate"><div class="logo"></div><h1 class="t-l">Bookz</h1><p class="b-l sec" style="max-width:32ch">${mode==='badkey'?'Эта ссылка не подошла. Открой Bookz по своей личной ссылке ещё раз':'Открой Bookz по своей личной ссылке — один раз на этом устройстве, дальше приложение запомнит вход'}</p></div>`; return; }
+  $('tabbar').hidden=false;
+  const pend=Object.keys(outbox).length; const legacy=Object.values(docs).some(d=>/data-asset=/.test(d.html||''));
+  const banner = (mode==='offline'?`<div class="banner" style="background:var(--lav-50);color:var(--t-brand)">Нет сети — всё работает, ${pend?`${pend} ${plural(pend,'изменение отправится','изменения отправятся','изменений отправятся')}, когда сеть появится`:'изменения отправятся, когда сеть появится'}</div>`:'')
+    + (legacy&&me?`<div class="banner" style="background:var(--lav-100);color:var(--t-primary);display:flex;gap:12px;align-items:center"><span class="grow">Картинки из старого Bookz ждут переноса. Загрузи файл <b>bookz-images.json</b></span><button class="btn m primary" type="button" data-act="importImages">Загрузить</button></div>`:'');
+  const v = ui.view==='home'?homeView():ui.view==='lists'?listsView():ui.view==='journal'?journalView():bookView();
+  const fe=document.activeElement, fid=fe&&fe.id&&$('view').contains(fe)?fe.id:null, sel=fid&&fe.selectionStart!=null?[fe.selectionStart,fe.selectionEnd]:null;
+  $('view').innerHTML=banner+v;
+  if(fid&&$(fid)){ $(fid).focus(); if(sel) try{$(fid).setSelectionRange(...sel);}catch(e){} }
+}
+function go(view,opts={}){ if(view!=='book'&&ui.view!=='book') ui.prevView=view; Object.assign(ui,{view},opts); if(['home','lists','journal'].includes(view)&&location.hash!=='#'+view) history.replaceState(null,'','#'+view); render(); window.scrollTo({top:0}); }
+function openBook(id){ ui.prevView=ui.view==='book'?ui.prevView:ui.view; ui.bookId=id; ui.view='book'; ui.readingSel=null; ui.bookTab=quotes(id).length?'quote':reflections(id).length?'reflection':'session'; render(); window.scrollTo({top:0}); }
+
+/* ================= Home ================= */
+function homeView(){
+  const now=new Date(), Y=now.getFullYear(), M=now.getMonth(), td=today();
+  const h=now.getHours(); const hello=h<5?'Доброй ночи':h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер';
+  const ents=allEntries(); const recDays=new Set(ents.map(e=>e.date)); const str=streak();
+  // week
+  const t0=parseYmd(td); const dow=(t0.getDay()+6)%7; const mon=addDays(td,-dow+ui.weekOffset*7);
+  const days=[...Array(7)].map((_,i)=>addDays(mon,i)); const wd=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const range=parseYmd(days[0]).getMonth()===parseYmd(days[6]).getMonth()?`${parseYmd(days[0]).getDate()} — ${dLong(days[6])}`:`${dLong(days[0])} — ${dLong(days[6])}`;
+  const week=`<section class="card week"><div class="row between"><span class="b-mm">${range}</span><div class="row"><button class="ibtn subtle" type="button" data-act="weekPrev" aria-label="Предыдущая неделя">${I('chevron-left')}</button><button class="ibtn subtle" type="button" data-act="weekNext" aria-label="Следующая неделя" ${ui.weekOffset>=0?'disabled':''}>${I('chevron-right')}</button></div></div>
+    <div class="days">${days.map((d,i)=>`<div class="day ${recDays.has(d)?'read':''} ${d===td?'today':''} ${d>td?'future':''}"><span class="micro">${wd[i]}</span><b>${parseYmd(d).getDate()}</b></div>`).join('')}</div></section>`;
+  // hero
+  const rb=readingBooks()[0]; let hero;
+  if(rb){ const r=curReading(rb.id), lp=lastPage(rb.id), pt=r?.pagesTotal; const pct=pt?Math.min(100,Math.round(lp/pt*100)):null;
+    hero=`<section class="hero"><div class="art" style="background-image:url(${HERO})"></div><span class="pill">Сейчас читаю</span>
+      <h2 class="t-l" style="margin-top:16px;max-width:70%">${esc(rb.t)}</h2><p class="b-m sec">${esc(rb.a)}</p>
+      <div style="margin-top:20px">${pt?`<div class="row between b-m"><span class="sec">стр. ${lp} из ${pt}</span><span class="b-mm">${pct}%</span></div><div class="bar" style="margin-top:8px"><i style="width:${Math.max(pct,2)}%"></i></div>`:`<button class="btn m secondary" type="button" data-act="editBook" data-id="${rb.id}">Указать число страниц</button>`}</div>
+      <div class="hero-actions"><button class="btn m" type="button" data-act="new" data-type="session" data-book="${rb.id}">${I('plus')}Сессия</button><button class="btn m" type="button" data-act="new" data-type="quote" data-book="${rb.id}">${I('plus')}Цитата</button><button class="ibtn inverse" type="button" data-act="book" data-id="${rb.id}" aria-label="Открыть книгу">${I('arrow-right')}</button></div></section>`;
+  } else { const nb=nextBook();
+    hero=`<section class="hero"><div class="art" style="background-image:url(${EMPTY})"></div><span class="pill">Сейчас ничего не читаю</span>
+      <h2 class="t-m" style="margin-top:16px;max-width:62%">Что почитаем дальше?</h2><p class="cap sec" style="margin-top:6px;max-width:62%">Следующая по курсу — «${esc(nb.t)}»${nb.a&&!nb.a.startsWith('автор')?' '+esc(nb.a):''}</p>
+      <div class="hero-actions" style="margin-top:40px"><button class="btn m primary" style="background:var(--bg-inverse);color:#fff" type="button" data-act="start" data-id="${nb.id}">Начать «${esc(nb.t.length>16?nb.t.slice(0,15)+'…':nb.t)}»</button><button class="btn m" type="button" data-go="lists" style="flex:none">${I('bookmark')}Списки</button></div></section>`; }
+  // goal
+  const gc=goalCalc(docs['goal_'+Y]?.target||0,Y); const C=2*Math.PI*44; const pct=gc.target?Math.min(1,gc.done/gc.target):0;
+  const arc=gc.state==='behind'?'var(--warn-b)':'var(--violet)';
+  const gCap={unset:`<span class="cap sec">Сколько книг прочитаешь до конца года?</span><button class="btn m lav" style="margin-top:10px;height:40px" type="button" data-act="goal">Задать цель</button>`,
+    normal:`<span class="cap sec">${paceText(gc.need,true)}</span>`,
+    ahead:`<span class="cap brand">Опережаешь план на ${gc.ahead} ${plural(gc.ahead,'книгу','книги','книг')}</span>`,
+    behind:`<span class="cap" style="color:var(--warn)">Нужно ${paceText(gc.need)}. Поменять цель?</span>`,
+    done:`<span class="cap brand">Цель выполнена! Поднять планку?</span><button class="btn m lav" style="margin-top:10px;height:40px" type="button" data-act="goal">Новая цель</button>`}[gc.state];
+  const goal=`<div class="card" data-act="goal" role="button" tabindex="0" style="padding:16px 16px 18px;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer"><span class="row between" style="width:100%"><span class="t-s">Цель ${Y}</span>${I('chevron-right','ic-20')}</span>
+    <span class="goal-ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="44" fill="none" stroke="var(--lav-50)" stroke-width="10" ${gc.state==='unset'?'stroke-dasharray="6 6"':''}/><circle cx="52" cy="52" r="44" fill="none" stroke="${arc}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" ${pct?'':'opacity="0"'}/></svg><span class="c"><b class="t-m">${gc.target?`${gc.done}/${gc.target}`:'?'}</b><span class="cap ter">книг</span></span></span>
+    ${gCap}</div>`;
+  const series=`<div class="series"><div class="row between"><span class="t-s">Серия</span><span class="ibtn">${I('flash','ic-20')}</span></div><div style="margin-top:24px"><div class="num-xl">${str}</div><div class="cap" style="color:rgba(255,255,255,.7)">${plural(str,'день','дня','дней')} подряд</div></div></div>`;
+  // stats
+  const per=ui.statPeriod; const key=per==='month'?`${Y}-${pad(M+1)}`:String(Y);
+  const ss=sessions().filter(s=>(s.date||'').startsWith(key)); const pages=ss.reduce((s,x)=>s+gain(x),0), mins=ss.reduce((s,x)=>s+(+x.minutes||0),0);
+  const per2=per==='month'?`в ${MON_IN[M]}`:`в ${Y}`;
+  const pagesBy={}; for(const s of sessions()) pagesBy[s.date]=(pagesBy[s.date]||0)+gain(s); for(const d of recDays) pagesBy[d]=pagesBy[d]||0.5;
+  const startH=addDays(td,-((t0.getDay()+6)%7)-7*14); let cells='';
+  for(let i=0;i<105;i++){ const d=addDays(startH,i); const v=pagesBy[d]||0; const l=d>td?'fut':v===0?'':v<10?'l1':v<25?'l2':v<50?'l3':'l4'; cells+=`<i class="${l}" ${d<=td&&recDays.has(d)?`data-day="${d}"`:''} title="${dShort(d)}${v>=1?': '+Math.round(v)+' стр.':''}"></i>`; }
+  const stats=`<section class="card"><div class="row between"><h2 class="t-m">Статистика</h2><div class="seg" style="width:auto"><button type="button" data-act="period" data-p="month" aria-pressed="${per==='month'}">${['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][M]}</button><button type="button" data-act="period" data-p="year" aria-pressed="${per==='year'}">${Y}</button></div></div>
+    <div class="duo" style="margin-top:16px"><div class="tile"><span class="dot">${I('document','ic-20')}</span><div><div class="num-l">${pages}</div><div class="cap sec">${plural(pages,'страница','страницы','страниц')} ${per2}</div></div></div><div class="tile"><span class="dot">${I('clock','ic-20')}</span><div><div class="num-l">${fmtMinShort(mins)}</div><div class="cap sec">чтения ${per2}</div></div></div></div>
+    <div class="b-mm" style="margin:20px 0 10px">Активность за 15 недель</div><div class="heat">${cells}</div>
+    <div class="legend">Меньше <i style="background:var(--heat0)"></i><i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> больше страниц</div></section>`;
+  // quotes
+  const qs=quotes().reverse().slice(0,8);
+  const qsec=`<section><div class="row between" style="padding:12px 4px 12px"><h2 class="t-m">Последние цитаты</h2>${qs.length?`<button class="b-mm brand" type="button" data-act="allQuotes" style="border:0;background:none">Все</button>`:''}</div>
+    ${qs.length?`<div class="hscroll">${qs.map(q=>{const b=bookById(q.bookId);return `<button class="qcard" type="button" data-act="viewEntry" data-id="${q.id}"><span class="qicon">${I('quote','ic-20')}</span><span class="q clamp4">«${esc(q.text)}»</span><span class="cap ter">${esc(b?.t||'')}${q.page?` · стр. ${esc(q.page)}`:''}</span></button>`;}).join('')}</div>`
+      :`<div class="card empty"><span class="qicon">${I('quote','ic-20')}</span><span>Здесь будут цитаты, которые ты сохранишь из книг</span><button class="btn m lav" type="button" data-act="new" data-type="quote">${I('plus')}Добавить цитату</button></div>`}</section>`;
+  return `<div class="stack"><div class="hello"><div class="grow"><h1 class="t-l">${hello}</h1><p class="cap sec">${now.toLocaleDateString('ru-RU',{weekday:'long'})}, ${dLong(td)}</p></div><button class="ibtn" type="button" data-act="search" aria-label="Поиск по дневнику">${I('search')}</button><button class="ibtn inverse" type="button" data-act="new" aria-label="Новая запись">${I('plus')}</button></div>
+    ${week}${hero}<div class="duo">${goal}${series}</div>${stats}${qsec}</div>`;
+}
+
+/* ================= Lists ================= */
+function listsView(){
+  const l=LIST[ui.list]; const bs=booksOf(ui.list);
+  const cnt=k=>bs.filter(b=>status(b.id)===k).length;
+  const tabs=LISTS.map(x=>{const n=booksOf(x.key);return `<button class="chip" type="button" data-act="list" data-k="${x.key}" aria-pressed="${ui.list===x.key}">${esc(x.name)} · ${n.filter(b=>status(b.id)==='read').length}/${n.length}</button>`;}).join('');
+  const read=cnt('read'), pct=bs.length?read/bs.length*100:0;
+  const sChip=(k,lab)=>`<button class="chip" type="button" data-act="fStatus" data-k="${k}" aria-pressed="${ui.fStatus===k}">${lab} · ${cnt(k)}</button>`;
+  const card=`<section class="listcard"><p class="b-m sec">${esc(l.desc)}</p><p class="cap sec" style="margin-top:16px">Прочитано</p><div class="row" style="align-items:baseline"><span class="num-xl">${read}</span><span class="b-l sec">из ${bs.length}</span></div>
+    <div class="row" style="margin-top:12px"><div class="bar grow"><i style="width:${Math.max(pct,read?2:0)}%"></i></div><span class="b-mm">${Math.round(pct)}%</span></div>
+    <div class="wrap" style="margin-top:16px">${sChip('reading','Читаю')}${sChip('want','Хочу прочитать')}${sChip('dropped','Бросила')}</div></section>`;
+  const eras=ERAS[ui.list].map(e=>e[0]);
+  const active=ui.fStatus!=='all'||ui.fRegion!=='all'||ui.sort!=='chrono';
+  const tools=`<div class="row"><label class="search">${I('search','ic-20')}<input id="lq" type="search" placeholder="Название или автор" value="${esc(ui.q)}" autocomplete="off"></label><button class="ibtn ${active?'inverse':''}" type="button" data-act="filters" aria-label="Фильтры">${I('filter')}</button></div>
+    <div class="hscroll">${['all',...eras].map(e=>`<button class="chip" type="button" data-act="era" data-k="${esc(e)}" aria-pressed="${ui.era===e}">${e==='all'?(ui.list==='english'?'Все уровни':'Все эпохи'):esc(e)}</button>`).join('')}</div>`;
+  const list=filteredBooks();
+  let body;
+  if(!list.length) body=`<div class="card empty"><span>Ничего не нашлось</span><button class="btn m lav" type="button" data-act="resetF">Сбросить фильтры</button></div>`;
+  else if(ui.sort==='chrono'){ const groups=[]; for(const b of list){ const e=eraOf(b); let g=groups.find(x=>x.e===e); if(!g){g={e,items:[]};groups.push(g);} g.items.push(b);} const capOf=e=>(ERAS[ui.list].find(x=>x[0]===e)||[])[1]||'';
+    body=groups.map(g=>`<div class="grp-h"><span class="t-s">${esc(g.e)}</span><span class="cap ter">${esc(capOf(g.e))}</span></div><div class="blist">${g.items.map(bookRow).join('')}</div>`).join(''); }
+  else body=`<div class="blist">${list.map(bookRow).join('')}</div>`;
+  return `<div class="stack"><div class="hello"><h1 class="t-l grow">Списки</h1><button class="ibtn inverse" type="button" data-act="addBook" aria-label="Добавить книгу">${I('plus')}</button></div>
+    <div class="hscroll">${tabs}</div>${card}${tools}${body}</div>`;
+}
+function filteredBooks(){
+  const q=ui.q.trim().toLowerCase();
+  let bs=booksOf(ui.list).filter(b=>{
+    if(ui.fStatus!=='all'&&status(b.id)!==ui.fStatus) return false;
+    if(ui.fRegion!=='all'&&b.region!==ui.fRegion) return false;
+    if(ui.era!=='all'&&eraOf(b)!==ui.era) return false;
+    if(q&&!(b.t.toLowerCase().includes(q)||(b.a||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const lv={B2:1,C1:2,C2:3};
+  const cmp={chrono:ui.list==='english'?(a,b)=>(lv[a.level]||9)-(lv[b.level]||9)||a.ord-b.ord:(a,b)=>((a.y||9999)-(b.y||9999))||a.ord-b.ord, title:(a,b)=>a.t.localeCompare(b.t,'ru'), author:(a,b)=>(a.a||'').localeCompare(b.a||'','ru')}[ui.sort];
+  return bs.sort(cmp);
+}
+function bookRow(b){ const st=status(b.id); let extra='';
+  if(st==='reading'){ const r=curReading(b.id); extra=`<div class="cap brand">Читаю${r?.pagesTotal?` · стр. ${lastPage(b.id)} из ${r.pagesTotal}`:''}</div>`; }
+  return `<div class="brow"><button class="st" type="button" data-act="status" data-id="${b.id}" aria-label="Статус: ${STATUS_NAME[st]}">${STATUS_ICON(st)}</button><button class="main" type="button" data-act="book" data-id="${b.id}"><span class="grow"><span class="b-mm" style="display:block">${esc(b.t)}</span><span class="cap ter" style="display:block">${esc(bookMeta(b))}</span>${extra}</span>${I('chevron-right')}</button></div>`; }
+const STATUS_NAME={reading:'Читаю',want:'Хочу прочитать',read:'Прочитано',dropped:'Бросила',none:'Без статуса'};
+
+/* ================= Book card ================= */
+const RLAB=['Оцени книгу','Не понравилась','Так себе','Нормально','Очень понравилась','Шедевр'];
+function periodTxt(a,b){ if(!b) return ''; const A=parseYmd(a||b), B=parseYmd(b); const y=B.getFullYear(); if(a===b||!a) return `${B.getDate()} ${MON_G[B.getMonth()]} ${y}`; if(A.getFullYear()!==y) return `${dLong(a)} ${A.getFullYear()} — ${dLong(b)} ${y}`; if(A.getMonth()===B.getMonth()) return `${A.getDate()} — ${dLong(b)} ${y}`; return `${dLong(a)} — ${dLong(b)} ${y}`; }
+function readCard(b,r,isLast){ const rt=r?.rating||0;
+  return `<section class="card stack" style="gap:14px"><div class="row"><span style="width:32px;height:32px;display:grid;place-items:center">${STATUS_ICON('read').replace('width="44" height="44"','width="40" height="40"')}</span><span class="b-mm">Прочитано${r?.finishedAt?` · ${periodTxt(r.startedAt,r.finishedAt)}`:''}</span></div>
+    <div><div class="stars">${[1,2,3,4,5].map(i=>`<button type="button" data-act="rate" data-rid="${r?.id||''}" data-r="${i}" aria-label="${i} из 5">${STAR(i<=rt)}</button>`).join('')}</div><p class="cap brand" style="margin-top:4px">${RLAB[rt]}</p></div>
+    <button class="note" type="button" data-act="review" data-rid="${r?.id||''}" style="border:0;text-align:left;width:100%"><span class="cap brand" style="display:block">Отзыв</span><span class="b-m">${r?.review?esc(r.review):'<span class="ter">Пара слов о книге — для себя будущей</span>'}</span></button>
+    ${isLast?`<button class="btn m lav block" type="button" data-act="start" data-id="${b.id}">${I('book')}${readings(b.id).length>1?'Перечитать ещё раз':'Перечитать'}</button>`:''}</section>`; }
+function compareCard(b){ const rs=readings(b.id); if(rs.length<2) return ''; const cols=rs.slice(-3); const stat=x=>{ const ss=sessions(b.id,x.id); const pages=ss.reduce((a,y)=>a+gain(y),0), mins=ss.reduce((a,y)=>a+(+y.minutes||0),0); const days=new Set(ss.map(y=>y.date)).size; return {rt:x.rating||'—',days:days||'—',sp:mins?Math.round(pages/(mins/60)):'—',q:quotes(b.id).filter(q=>q.readingId===x.id).length}; };
+  const S=cols.map(stat); const row=(l,k)=>`<tr><td>${l}</td>${S.map((v,i)=>`<td class="${i===S.length-1?'now':''}">${v[k]}</td>`).join('')}</tr>`;
+  return `<section class="card"><h2 class="t-m">Как менялось</h2><table class="cmp" style="margin-top:12px"><thead><tr><th></th>${cols.map(x=>`<th>${(x.finishedAt||x.startedAt||today()).slice(0,4)}</th>`).join('')}</tr></thead><tbody>${row('Оценка','rt')}${row('Дней','days')}${row('Стр. в час','sp')}${row('Цитат','q')}</tbody></table></section>`; }
+function bookView(){
+  const b=bookById(ui.bookId); if(!b) return `<div class="card empty">Книга не найдена</div>`;
+  const st=status(b.id), d=bdoc(b.id); const rs=readings(b.id); const last=rs[rs.length-1];
+  const r=rs.find(x=>x.id===ui.readingSel)||last; const isLast=!r||r===last;
+  const head=`<div class="row between"><button class="ibtn" type="button" data-act="back" aria-label="Назад">${I('chevron-left')}</button><button class="ibtn" type="button" data-act="status" data-id="${b.id}" aria-label="Статус книги">${I('more')}</button></div>
+    <div class="bk-head"><span class="cover l ${coverColor(b)}"></span><div class="grow"><h1 class="t-l">${esc(b.t)}</h1><p class="cap sec" style="margin-top:4px">${esc([b.a,fmtYear(b.y)].filter(Boolean).join(' · '))}</p><div class="wrap" style="margin-top:12px">${b.region||b.level?`<span class="tag">${esc(b.region||b.level)}</span>`:''}${b.pos?`<span class="tag white">№${b.pos} в курсе</span>`:''}</div></div></div>`;
+  let sc='';
+  const rchips=rs.length>1?`<div><span class="label" style="padding-left:4px">Прочтения</span><div class="rchips">${rs.map((x,i)=>({x,i})).reverse().map(({x,i})=>`<button class="chip" type="button" data-act="readingSel" data-id="${x.id}" aria-pressed="${x===r}">${i+1}-е · ${(x.finishedAt||x.startedAt||today()).slice(0,4)}${x.translation?' · '+esc(x.translation.split(' ').pop()):''}</button>`).join('')}</div></div>`:'';
+  if(!isLast&&r){ sc=readCard(b,r,false); }
+  else if(st==='reading'){ const lp=lastPage(b.id), pt=r?.pagesTotal; const pct=pt?Math.min(100,Math.round(lp/pt*100)):0; const C=2*Math.PI*42; const fc=forecast(b.id);
+    sc=`<section class="card stack" style="gap:16px"><div class="row"><span style="width:32px;height:32px;display:grid;place-items:center">${STATUS_ICON('reading').replace('width="44" height="44"','width="40" height="40"')}</span><span class="b-mm">Читаю${r?.startedAt?` с ${dLong(r.startedAt)}`:''}</span></div>
+      <div class="row" style="gap:16px"><div class="ring"><svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="42" fill="none" stroke="var(--lav-50)" stroke-width="8"/><circle cx="48" cy="48" r="42" fill="none" stroke="var(--violet)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}" ${pct?'':'opacity="0"'}/></svg><div class="c"><b class="t-s">${pt?pct+'%':'—'}</b><span class="micro ter">прочитано</span></div></div>
+      <div class="grow">${pt?`<p class="t-s">стр. ${lp} из ${pt}</p><p class="cap sec">Осталось ${pt-lp} стр.</p>${fc?`<p class="cap brand" style="margin-top:6px">При твоём темпе дочитаешь ≈${dLong(fc)}</p>`:''}`:`<p class="b-m sec">Укажи число страниц в издании, чтобы видеть прогресс</p><button class="btn m subtle" style="margin-top:8px" type="button" data-act="editBook" data-id="${b.id}">Указать</button>`}</div></div>
+      <div class="row"><button class="btn m primary grow" type="button" data-act="new" data-type="session" data-book="${b.id}">${I('plus')}Сессия</button><button class="ibtn lav" type="button" data-act="new" data-type="quote" data-book="${b.id}" aria-label="Цитата">${I('quote')}</button><button class="ibtn lav" type="button" data-act="new" data-type="reflection" data-book="${b.id}" aria-label="Размышление">${I('journal')}</button></div></section>`;
+  } else if(st==='read'){ sc=readCard(b,r,true);
+  } else if(st==='dropped'){ const pt=r?.pagesTotal, at=r?.droppedAtPage??lastPage(b.id); const pct=pt?Math.round(at/pt*100):0; const RS={not_for_me:'Не моё',not_now:'Не время',hard:'Тяжело',boring:'Скучно',other:'Другое'};
+    sc=`<section class="card stack" style="gap:14px"><div class="row"><span style="width:32px;height:32px;display:grid;place-items:center">${STATUS_ICON('dropped').replace('width="44" height="44"','width="40" height="40"')}</span><span class="b-mm">Бросила${r?.droppedAt?` ${dLong(r.droppedAt)}`:''}${pt?` на стр. ${at} из ${pt}`:''}</span></div>
+      ${pt?`<div class="row"><div class="bar sub grow"><i style="width:${pct}%;background:var(--lav-400)"></i></div><span class="cap sec">${pct}%</span></div>`:''}
+      ${r?.dropReason||r?.dropComment?`<div class="note"><div class="row"><span class="cap sec">Причина</span>${r.dropReason?`<span class="tag white" style="height:24px">${RS[r.dropReason]}</span>`:''}</div>${r.dropComment?`<p class="b-m" style="margin-top:6px">${esc(r.dropComment)}</p>`:''}</div>`:''}
+      <button class="btn m primary block" type="button" data-act="resume" data-id="${b.id}">${I('book')}Вернуться к книге</button></section>`;
+  } else { const since=d?.wantSince;
+    sc=`<section class="card stack" style="gap:14px">${st==='want'?`<div class="row"><span style="width:32px;height:32px;display:grid;place-items:center">${STATUS_ICON('want').replace('width="44" height="44"','width="40" height="40"')}</span><span class="b-mm">В «Хочу прочитать»${since?` с ${dLong(since)}`:''}</span></div>`:`<p class="b-m sec">Книги пока нет в планах</p>`}
+      <button class="btn m primary block" type="button" data-act="start" data-id="${b.id}">${I('book')}Начать читать</button>${st==='none'?`<button class="btn m lav block" type="button" data-act="setStatus" data-id="${b.id}" data-s="want">${I('bookmark')}Хочу прочитать</button>`:''}</section>`; }
+  // stats for current/last reading
+  let statsC='';
+  if(r){ const ss=sessions(b.id,r.id); if(ss.length){ const pages=ss.reduce((s,x)=>s+gain(x),0), mins=ss.reduce((s,x)=>s+(+x.minutes||0),0), days=new Set(ss.map(s=>s.date)).size; const speed=mins?Math.round(pages/(mins/60)):0;
+    const first=r.startedAt||ss[0].date, last=r.finishedAt||r.droppedAt||today(); const span=[]; for(let d=first;d<=last&&span.length<60;d=addDays(d,1)) span.push(d); const bd={}; for(const s of ss) bd[s.date]=(bd[s.date]||0)+gain(s); const mx=Math.max(1,...Object.values(bd)); const shown=span.slice(-21);
+    statsC=`<section class="card"><h2 class="t-m">Статистика</h2><div class="duo" style="margin-top:16px">
+      <div class="tile"><span class="dot">${I('calendar','ic-20')}</span><div><div class="num-l">${days}</div><div class="cap sec">${plural(days,'день','дня','дней')} чтения</div></div></div>
+      <div class="tile"><span class="dot">${I('document','ic-20')}</span><div><div class="num-l">${pages}</div><div class="cap sec">${plural(pages,'страница','страницы','страниц')}</div></div></div>
+      <div class="tile"><span class="dot">${I('clock','ic-20')}</span><div><div class="num-l">${fmtMinShort(mins)}</div><div class="cap sec">чтения</div></div></div>
+      <div class="tile"><span class="dot">${I('flash','ic-20')}</span><div><div class="num-l">${speed||'—'}</div><div class="cap sec">стр. в час</div></div></div></div>
+      <p class="b-mm" style="margin-top:20px">Страниц по дням</p><div class="bars">${shown.map((d,i)=>{const v=bd[d]||0;return `<i class="${v?'':'zero'} ${i===shown.length-1&&v?'last':''}" style="height:${v/mx*100}%" title="${dShort(d)}: ${v} стр."></i>`;}).join('')}</div>
+      <div class="row between cap ter" style="margin-top:8px"><span>${dShort(shown[0])}</span><span class="${bd[shown[shown.length-1]]?'brand':''}">${shown[shown.length-1]===today()?'сегодня':dShort(shown[shown.length-1])}${bd[shown[shown.length-1]]?` · ${bd[shown[shown.length-1]]} стр.`:''}</span></div></section>`; } }
+  // records
+  const multi=rs.length>1&&r; const qn=quotes(b.id).filter(q=>!multi||q.readingId===r.id||(!q.readingId&&isLast)), rn=reflections(b.id), sn=sessions(b.id).filter(x=>!multi||x.readingId===r.id);
+  let rec;
+  if(!qn.length&&!rn.length&&!sn.length) rec=`<section class="card empty"><span class="qicon">${I('quote','ic-20')}</span><span>Статистика, цитаты и мысли появятся, как только начнёшь читать</span></section>`;
+  else { const tab=ui.bookTab; const items=tab==='quote'?qn:tab==='reflection'?rn:sn;
+    rec=`<div class="seg on-page">${[['quote','Цитаты',qn.length],['reflection','Мысли',rn.length],['session','Сессии',sn.length]].map(([k,l,n])=>`<button type="button" data-act="bookTab" data-k="${k}" aria-pressed="${tab===k}">${l} · ${n}</button>`).join('')}</div>
+      ${items.slice().reverse().map(e=>entryCard({...e,type:tab},{noBook:true})).join('')||`<div class="card empty"><span>Пока пусто</span></div>`}
+      <button class="btn m lav block" type="button" data-act="new" data-type="${tab}" data-book="${b.id}">${I('plus')}${tab==='quote'?'Добавить цитату':tab==='reflection'?'Добавить мысль':'Добавить сессию'}</button>`; }
+  const about=`<section class="card"><h2 class="t-m">О книге</h2><div style="margin-top:8px"><div class="kv"><span>Страниц в издании</span><span>${r?.pagesTotal||'<span class="ter" style="font-weight:400">укажешь при старте</span>'}</span></div><div class="kv"><span>Перевод</span><span>${r?.translation?esc(r.translation):'—'}</span></div><div class="kv"><span>Список</span><span>${esc(LIST[b.list].name)}${b.pos?` · №${b.pos}`:''}</span></div>${b.region||b.level?`<div class="kv"><span>${b.region?'Регион':'Уровень'}</span><span>${esc(b.region||b.level)}</span></div>`:''}</div>
+    ${r?`<button class="btn m subtle block" style="margin-top:12px" type="button" data-act="editBook" data-id="${b.id}">${I('journal')}Изменить данные книги</button>`:''}</section>`;
+  return `<div class="stack">${head}${rchips}${sc}${compareCard(b)}${statsC}<h2 class="t-m" style="padding:8px 4px 0">Записи</h2>${rec}${about}</div>`;
+}
+
+/* ================= Entries ================= */
+function hl(text){ const s=esc(text); const q=(ui.jSearch||'').trim(); if(!q||ui.view!=='journal') return s; const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'); return s.replace(re,m=>`<mark>${m}</mark>`); }
+function imgsOf(html){ const out=[]; (html||'').replace(/<img[^>]*>/g,tag=>{ const sbp=tag.match(/data-sb="([^"]+)"/); const da=tag.match(/src="(data:image\/[^"]+)"/); if(sbp) out.push(IMG_BASE+sbp[1]); else if(da) out.push(da[1]); else if(/data-asset=/.test(tag)) out.push(''); }); return out; }
+function entryCard(e,o={}){ const b=bookById(e.bookId);
+  const head=`<div class="e-head"><span class="e-ico">${I(e.type==='quote'?'quote':e.type==='session'?'book':'journal')}</span><div class="grow"><div class="cap ter">${e.type==='quote'?'Цитата':e.type==='session'?'Сессия':'Размышление'}${o.noBook?` · ${dLong(e.date)}`:''}</div>${o.noBook?'':`<div class="b-mm">${esc(b?.t||'Без книги')}</div>`}</div></div>`;
+  let body='';
+  if(e.type==='quote') body=`<div class="q">«${hl(e.text)}»</div>${e.page?`<div class="cap ter">стр. ${esc(e.page)}</div>`:''}`;
+  else if(e.type==='session') body=`<div class="b-mm">+${gain(e)} стр. · стр. ${e.pageFrom||0} → ${e.pageTo}${e.minutes?` · ${fmtMin(+e.minutes)}`:''}</div>${e.text?`<div class="b-m sec clamp4">${hl(e.text)}</div>`:''}${imgThumbs(e.html)}`;
+  else body=`${e.title?`<div class="t-s">${hl(e.title)}</div>`:''}${e.text?`<div class="b-m clamp6">${hl(e.text)}</div>`:''}${imgThumbs(e.html)}`;
+  return `<button class="entry" type="button" data-act="viewEntry" data-id="${e.id}">${head}${body}</button>`;
+}
+function imgThumbs(html){ const im=imgsOf(html).slice(0,4); return im.length?`<div class="thumbs">${im.map(u=>u?`<img src="${esc(u)}" alt="" loading="lazy">`:`<img alt="Картинка ждёт переноса">`).join('')}</div>`:''; }
+
+/* ================= Journal ================= */
+function jMatch(bookId){ const f=ui.jBook; if(f==='all') return true; const b=bookById(bookId); if(f.startsWith('list:')) return b?.list===f.slice(5); if(f.startsWith('era:')){ const [,l,e]=f.split(':'); return !!b&&b.list===l&&eraOf(b)===e; } return bookId===f; }
+function scopeLabel(f){ const all=allEntries(); if(f.startsWith('list:')){ const l=f.slice(5); return LIST[l].name; } if(f.startsWith('era:')){ const [,l,e]=f.split(':'); const n=new Set(all.filter(x=>{const b=bookById(x.bookId);return b&&b.list===l&&eraOf(b)===e;}).map(x=>x.bookId)).size; return `${e} · ${n} ${plural(n,'книга','книги','книг')}`; } return bookById(f)?.t||''; }
+const WD_LONG=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function journalView(){
+  const all=allEntries().sort((a,b)=>byTime(b,a));
+  let es=all.filter(e=>jMatch(e.bookId)&&(!ui.jDay||e.date===ui.jDay));
+  const n={all:es.length,session:0,reflection:0,quote:0}; for(const e of es) n[e.type]++;
+  if(ui.jKind!=='all') es=es.filter(e=>e.type===ui.jKind);
+  const q=(ui.jSearch||'').trim().toLowerCase(); if(q) es=es.filter(e=>[e.text,e.title,e.comment,bookById(e.bookId)?.t].some(x=>(x||'').toLowerCase().includes(q)));
+  const recent=[...new Set(all.map(e=>e.bookId).filter(Boolean))].slice(0,3).map(bookById).filter(Boolean);
+  const scoped=ui.jBook.includes(':');
+  if(!scoped&&ui.jBook!=='all'&&!recent.find(b=>b.id===ui.jBook)){ const sb=bookById(ui.jBook); if(sb) recent.unshift(sb); }
+  const chips=`<div class="hscroll"><button class="chip" type="button" data-act="jPick" aria-pressed="${ui.jBook==='all'}">Все книги${I('chevron-down')}</button>${scoped?`<button class="chip" type="button" data-act="jBook" data-id="${esc(ui.jBook)}" aria-pressed="true">${esc(scopeLabel(ui.jBook))}</button>`:''}${recent.map(b=>`<button class="chip" type="button" data-act="jBook" data-id="${b.id}" aria-pressed="${ui.jBook===b.id}">${esc(b.t)}</button>`).join('')}</div>`;
+  const dayBar=ui.jDay?`<div class="row between"><span class="chip" style="background:var(--bg-inverse);color:#fff">${dLong(ui.jDay)}, ${WD_LONG[parseYmd(ui.jDay).getDay()]}</span><button class="b-mm brand" type="button" data-act="jAllDays" style="border:0;background:none">Все дни</button></div>`:'';
+  const seg=`<div class="seg on-page">${[['all','Все'],['session','Сессии'],['reflection','Мысли'],['quote','Цитаты']].map(([k,l])=>`<button type="button" data-act="jKind" data-k="${k}" aria-pressed="${ui.jKind===k}">${l} · ${n[k]}</button>`).join('')}</div>`;
+  let bookCard=''; if(ui.jBook!=='all'&&!scoped){ const b=bookById(ui.jBook); if(b) bookCard=`<div class="row" style="background:${b?'var(--lav-100)':''};border-radius:var(--r20);padding:12px 16px 12px 12px"><span class="cover ${coverColor(b)}"></span><div class="grow"><div class="b-mm">${esc(b.t)}</div><div class="cap sec">${STATUS_NAME[status(b.id)]} · ${n.all} ${plural(n.all,'запись','записи','записей')}</div></div><button class="b-mm brand" type="button" data-act="book" data-id="${b.id}" style="border:0;background:none">К книге</button></div>`; }
+  const search=ui.jSearch!=null?`<div class="row"><label class="search">${I('search','ic-20')}<input id="jq" type="search" placeholder="Поиск по записям" value="${esc(ui.jSearch)}" autocomplete="off"></label><button class="ibtn" type="button" data-act="jSearchClose" aria-label="Закрыть поиск">${I('close')}</button></div>`:'';
+  let body;
+  if(!all.length) body=`<div class="card empty"><span class="qicon">${I('journal','ic-20')}</span><span>Здесь появятся сессии, мысли и цитаты</span><button class="btn m primary" type="button" data-act="new">${I('plus')}Новая запись</button></div>`;
+  else if(!es.length) body=`<div class="card empty"><span>${q?'Ничего не нашлось':'Записей такого типа нет'}</span></div>`;
+  else { const groups=[]; for(const e of es){ const g=groups[groups.length-1]; if(g&&g.d===e.date) g.items.push(e); else groups.push({d:e.date,items:[e]}); }
+    body=groups.map(g=>{ const t=today(); const lab=g.d===t?'Сегодня':g.d===addDays(t,-1)?'Вчера':dLong(g.d); return `<div class="day-h"><span class="t-s">${lab}</span>${lab!==dLong(g.d)?`<span class="cap ter">${dLong(g.d)}</span>`:''}</div>${g.items.map(e=>entryCard(e)).join('')}`; }).join(''); }
+  return `<div class="stack"><div class="hello"><h1 class="t-l grow">Дневник</h1><button class="ibtn" type="button" data-act="jSearchOpen" aria-label="Поиск">${I('search')}</button><button class="ibtn" type="button" data-act="calendar" aria-label="Календарь">${I('calendar')}</button></div>
+    ${search}${chips}${seg}${dayBar}${bookCard}${body}</div>`;
+}
+
+/* ================= Sheets ================= */
+let sheets=[];
+function openSheet(s){ sheets.push(s); renderSheet(); }
+function closeSheet(force){ const s=sheets[sheets.length-1]; if(!s) return; if(!force&&s.isDirty&&s.isDirty()&&!s.confirmExit){ s.confirmExit=true; renderSheet(); return; } if(s.onClose){ s.onClose(); return; } sheets.pop(); renderSheet(); }
+function renderSheet(){
+  const s=sheets[sheets.length-1];
+  if(!s){ $('sheets').innerHTML=''; document.body.style.overflow=''; return; }
+  document.body.style.overflow='hidden';
+  const fullIdx=sheets.map((x,i)=>x.full?i:-1).filter(i=>i>=0).pop();
+  const under=fullIdx!=null&&fullIdx>=0&&s!==sheets[fullIdx]?`<div class="celebrate" style="animation:none">${sheets[fullIdx].draw()}</div>`:'';
+  if(s.full){ $('sheets').innerHTML=`<div class="celebrate" role="dialog" aria-modal="true">${s.draw()}</div>`; return; }
+  const inner = s.confirmExit ? {title:'Выйти без сохранения?', body:`<p class="b-m sec">Запись не сохранится</p>`, foot:`<button class="btn primary block" type="button" data-sact="exitYes">Выйти</button><button class="btn lav block" type="button" data-sact="exitNo">Остаться</button>`} : s.draw();
+  $('sheets').innerHTML=under+`<div class="scrim" data-sact="scrim"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(inner.title)}"><div class="handle"></div><div class="s-head ${inner.noHead?'none':''}"><h2 class="t-m grow">${esc(inner.title)}</h2><button class="ibtn subtle" type="button" data-sact="close" aria-label="Закрыть">${I('close')}</button></div><div class="s-body" id="sbody">${inner.body}</div>${inner.foot?`<div class="s-foot">${inner.foot}</div>`:''}</div>`;
+  if(!s.confirmExit&&s.mount) s.mount();
+}
+function refreshSheet(){ const s=sheets[sheets.length-1]; if(!s||!s.live) return; const fe=document.activeElement; if(fe&&$('sheets').contains(fe)&&/INPUT|TEXTAREA/.test(fe.tagName)||fe&&fe.isContentEditable) return; renderSheet(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&sheets.length) closeSheet(); if((e.key==='Enter'||e.key===' ')&&e.target.matches?.('[role="button"][data-act="goal"]')){ e.preventDefault(); goalSheet(); } });
+
+/* --- status sheet --- */
+function statusSheet(id){ const b=bookById(id); openSheet({ draw(){ const st=status(id); const r=curReading(id);
+  return {title:b.t, body:`<p class="cap sec" style="margin-top:-12px">${esc([b.a,fmtYear(b.y)].filter(Boolean).join(' · '))}${r?.pagesTotal?` · ${r.pagesTotal} стр.`:''}</p><div>${['reading','want','read','dropped','none'].map(k=>`<button class="opt ${st===k?'sel':''}" type="button" data-sact="pickStatus" data-k="${k}">${STATUS_ICON(k)}<span>${STATUS_NAME[k]}</span>${st===k?I('check','chk'):''}</button>`).join('')}</div><p class="cap ter">«Читаю» поставит книгу на Главную</p>`}; },
+  act(a,el){ if(a==='pickStatus'){ const k=el.dataset.k; if(k===status(id)){ closeSheet(true); return; } sheets.pop(); applyStatus(id,k); } } }); }
+function applyStatus(id,k){
+  const st=status(id), r=curReading(id);
+  if(k==='reading'){ if(r&&!r.finishedAt&&st!=='reading'){ updBook(id,d=>{ d.status='reading'; const rr=d.readings[d.readings.length-1]; delete rr.droppedAt; }); renderSheet(); render(); toast(`«${bookById(id).t}» — на Главной`); return; } startSheet(id); return; }
+  if(k==='dropped'){ dropSheet(id); return; }
+  if(k==='read'){ updBook(id,d=>{ let rr=d.readings[d.readings.length-1]; if(!rr||rr.finishedAt){ rr={id:uid('r'),startedAt:today()}; d.readings.push(rr); } rr.finishedAt=today(); delete rr.droppedAt; if(rr.pagesTotal) rr.page=rr.pagesTotal; d.status='read'; }); sheets=[]; celebrate(id); return; }
+  updBook(id,d=>{ d.status=k; if(k==='want') d.wantSince=today(); }); renderSheet(); render(); toast(k==='want'?'Добавила в «Хочу прочитать»':'Статус снят');
+}
+
+/* --- start reading sheet (07.7) --- */
+function startSheet(id){ const b=bookById(id); const prev=readings(id).slice(-1)[0]; const st={pages:prev?.pagesTotal||'',tr:prev?.translation||'',when:'today',date:today()};
+  openSheet({ draw(){ return {title:`Начинаем «${b.t.length>22?b.t.slice(0,21)+'…':b.t}»`, body:`
+    <div><label class="label" for="sp">Страниц в твоём издании</label><div class="field"><input id="sp" inputmode="numeric" value="${esc(st.pages)}" placeholder="Напр. 480"></div><p class="hint">Нужно, чтобы считать прогресс. Поменять можно в «О книге»</p></div>
+    <div><label class="label" for="str">Перевод или издание</label><div class="field"><input id="str" value="${esc(st.tr)}" placeholder="Напр. В. Жуковский"></div><p class="hint">Необязательно</p></div>
+    <div><span class="label">Когда начала</span>${whenChips(st)}</div>`, foot:`<button class="btn primary block" type="button" data-sact="go">Начать читать</button>`}; },
+   mount(){ $('sp').oninput=e=>st.pages=e.target.value.replace(/\D/g,''); $('str').oninput=e=>st.tr=e.target.value; bindWhen(st); },
+   act(a){ if(a==='go'){ const p=parseInt(st.pages,10); updBook(id,d=>{ d.status='reading'; d.readings.push({id:uid('r'),startedAt:st.date,...(p>0?{pagesTotal:p}:{}),...(st.tr.trim()?{translation:st.tr.trim()}:{})}); }); sheets=[]; renderSheet(); go('home'); toast(`«${b.t}» — на Главной`); } } }); }
+function whenChips(st){ return `<div class="wrap">${[['today','Сегодня'],['yesterday','Вчера'],['other','Другой день']].map(([k,l])=>`<button class="chip sub" type="button" data-when="${k}" aria-pressed="${st.when===k}">${l}</button>`).join('')}</div>${st.when==='other'?`<div class="field" style="margin-top:8px"><input id="wdate" type="date" value="${st.date}" max="${today()}"></div>`:''}`; }
+function bindWhen(st){ document.querySelectorAll('[data-when]').forEach(b=>b.onclick=()=>{ st.when=b.dataset.when; st.date=st.when==='today'?today():st.when==='yesterday'?addDays(today(),-1):st.date; renderSheet(); }); const w=$('wdate'); if(w) w.onchange=e=>st.date=e.target.value||today(); }
+
+/* --- drop sheet (07.8) --- */
+function dropSheet(id){ const b=bookById(id); const st={reason:'',comment:''}; const RS=[['not_for_me','Не моё'],['not_now','Не время'],['hard','Тяжело'],['boring','Скучно'],['other','Другое']];
+  openSheet({ draw(){ return {title:'Почему бросила?', body:`<p class="b-m sec" style="margin-top:-8px">«${esc(b.t)}» — прогресс и записи сохранятся</p><div class="wrap">${RS.map(([k,l])=>`<button class="chip sub" type="button" data-sact="reason" data-k="${k}" aria-pressed="${st.reason===k}">${l}</button>`).join('')}</div><div><label class="label" for="dc">Комментарий</label><div class="field"><textarea id="dc" rows="3" placeholder="Например: вернусь, когда дочитаю Гомера">${esc(st.comment)}</textarea></div></div>`, foot:`<button class="btn primary block" type="button" data-sact="ok">Сохранить</button>`}; },
+   mount(){ $('dc').oninput=e=>st.comment=e.target.value; },
+   act(a,el){ if(a==='reason'){ st.reason=st.reason===el.dataset.k?'':el.dataset.k; renderSheet(); } if(a==='ok'){ const lp=lastPage(id); updBook(id,d=>{ let rr=d.readings[d.readings.length-1]; if(!rr||rr.finishedAt){ rr={id:uid('r'),startedAt:today()}; d.readings.push(rr);} rr.droppedAt=today(); rr.droppedAtPage=lp; if(st.reason) rr.dropReason=st.reason; if(st.comment.trim()) rr.dropComment=st.comment.trim(); d.status='dropped'; }); closeSheet(true); render(); toast('Отметила как брошенную'); } } }); }
+
+/* --- edit book data --- */
+function editBookSheet(id){ const r=curReading(id); const st={pages:r?.pagesTotal||'',tr:r?.translation||''};
+  openSheet({ draw(){ return {title:'Данные книги', body:`<div><label class="label" for="ep">Страниц в издании</label><div class="field"><input id="ep" inputmode="numeric" value="${esc(st.pages)}"></div></div><div><label class="label" for="et">Перевод или издание</label><div class="field"><input id="et" value="${esc(st.tr)}" placeholder="Необязательно"></div></div>`, foot:`<button class="btn primary block" type="button" data-sact="ok">Сохранить</button>`}; },
+   mount(){ $('ep').oninput=e=>st.pages=e.target.value.replace(/\D/g,''); $('et').oninput=e=>st.tr=e.target.value; },
+   act(a){ if(a==='ok'){ const p=parseInt(st.pages,10); updBook(id,d=>{ let rr=d.readings[d.readings.length-1]; if(!rr){ rr={id:uid('r'),startedAt:today()}; d.readings.push(rr);} if(p>0) rr.pagesTotal=p; else delete rr.pagesTotal; if(st.tr.trim()) rr.translation=st.tr.trim(); else delete rr.translation; }); closeSheet(true); render(); toast('Сохранено'); } } }); }
+
+/* --- goal sheet (05.2–05.4) --- */
+function goalSheet(){ const Y=new Date().getFullYear(); const done=readDoneIn(Y); const cur=docs['goal_'+Y]?.target; const st={v:Math.max(cur||10,done,1)};
+  openSheet({ draw(){ const gc=goalCalc(st.v,Y); const amb=gc.left>0&&gc.avg>0&&gc.need>=2*gc.avg&&gc.need>=1.5; const atMin=st.v<=Math.max(done,1);
+    const ratio=gc.avg?gc.need/gc.avg:0;
+    return {title:`Цель на ${Y}`, body:`<div class="stepper"><button class="ibtn" type="button" data-sact="minus" aria-label="Меньше" ${atMin?'disabled':''}><svg viewBox="0 0 24 24" width="24" height="24"><path d="M6 12H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button><div class="grow" style="text-align:center"><div class="num-xl">${st.v}</div><div class="cap sec">${plural(st.v,'книга','книги','книг')} до конца года</div></div><button class="ibtn" type="button" data-sact="plus" aria-label="Больше">${I('plus')}</button></div>
+      ${atMin&&done?`<p class="cap ter" style="text-align:center;margin-top:-8px">Ты уже прочитала ${done} ${plural(done,'книгу','книги','книг')} — меньше не получится</p>`:''}
+      <div class="row" style="gap:8px">${[6,10,12,20].filter(n=>n>=done).map(n=>`<button class="chip sub grow" style="justify-content:center;padding:0 8px" type="button" data-sact="set" data-v="${n}" aria-pressed="${st.v===n}">${n} книг</button>`).join('')}</div>
+      <div class="sum ${amb?'amb':''}"><div class="kv"><span>Уже прочитано</span><span>${done} ${plural(done,'книга','книги','книг')}</span></div><div class="kv"><span>Осталось</span><span>${gc.left} ${plural(gc.left,'книга','книги','книг')}</span></div><div class="kv"><span>До конца года</span><span>${gc.weeksLeft} ${plural(gc.weeksLeft,'неделя','недели','недель')}</span></div>
+        <div class="kv pace"><span>Нужный темп</span><span>${paceText(gc.need)}</span></div>${amb?`<p class="cap" style="color:var(--warn);margin-top:6px">Это ${ratio>=2.5?`в ${dec(ratio)} раза`:'вдвое'} быстрее твоего обычного темпа. Амбициозно — цель можно поменять в любой момент</p>`:''}</div>`,
+      foot:`<button class="btn primary block" type="button" data-sact="ok">Сохранить цель</button>`}; },
+   act(a,el){ if(a==='minus'){ st.v=Math.max(done,1,st.v-1); renderSheet(); } if(a==='plus'){ st.v=Math.min(500,st.v+1); renderSheet(); } if(a==='set'){ st.v=+el.dataset.v; renderSheet(); } if(a==='ok'){ setDoc('goal_'+Y,{kind:'goal',year:Y,target:st.v}); closeSheet(true); render(); toast(`Цель — ${st.v} ${plural(st.v,'книга','книги','книг')} до конца года`); } } }); }
+
+/* --- 04 · finish flow --- */
+function readingStats(id,r){ const ss=r?sessions(id,r.id):[]; const pages=ss.length?ss.reduce((a,x)=>a+gain(x),0):(r?.pagesTotal||0); const mins=ss.reduce((a,x)=>a+(+x.minutes||0),0);
+  let days=new Set(ss.map(x=>x.date)).size; if(!days&&r?.startedAt&&r?.finishedAt){ days=Math.round((parseYmd(r.finishedAt)-parseYmd(r.startedAt))/864e5)+1; }
+  const q=quotes(id).filter(x=>!x.readingId||x.readingId===r?.id).length, rf=reflections(id).length; return {pages,mins,days:Math.max(days,1),q,rf}; }
+function askFinish(id){ const b=bookById(id); const r=curReading(id); const Y=new Date().getFullYear(); const gc=goalCalc(docs['goal_'+Y]?.target||0,Y);
+  openSheet({ draw(){ return {title:'Дочитала?', noHead:true, body:`<div class="artcard" style="background-image:url(${HERO})"></div><h2 class="t-l">Дочитала «${esc(b.t)}»?</h2><p class="b-m sec" style="margin-top:-12px">${r?.pagesTotal?`Ты дошла до ${r.pagesTotal}-й страницы из ${r.pagesTotal}. `:''}Отметим книгу прочитанной${gc.target?` — цель года станет ${gc.done+1}/${gc.target}`:''}</p>`, foot:`<button class="btn primary block" type="button" data-sact="yes">Да, дочитала</button><button class="btn lav block" type="button" data-sact="no">Ещё нет, только сессия</button>`}; },
+   act(a){ if(a==='yes'){ sheets=[]; finishBook(id); celebrate(id); } if(a==='no'){ sheets=[]; renderSheet(); render(); toast('Сессия записана'); } } }); }
+function celebrate(id){ const b=bookById(id); const Y=new Date().getFullYear();
+  const s={ full:true, draw(){ const r=curReading(id); const st=readingStats(id,r); const gc=goalCalc(docs['goal_'+Y]?.target||0,Y); const n=gc.done; const C=2*Math.PI*16; const gp=gc.target?Math.min(1,gc.done/gc.target):0;
+    return `<div class="in"><div class="art" style="background-image:url(${HERO})"></div><button class="ibtn x" type="button" data-sact="close" aria-label="Закрыть">${I('close')}</button>
+      <div style="margin-top:-40px;position:relative"><span class="pill">${n<=ORD.length?ORD[n-1]:n+'-я'} книга в ${Y}</span><h1 class="t-l" style="margin-top:12px">«${esc(b.t)}» прочитана</h1><p class="b-m sec" style="margin-top:4px">${st.days} ${plural(st.days,'день','дня','дней')} — от первой до последней страницы</p></div>
+      <div class="card" style="margin-top:20px"><div class="duo" style="gap:16px 12px"><div><div class="num-l">${st.days}</div><div class="cap sec">${plural(st.days,'день','дня','дней')} чтения</div></div><div><div class="num-l">${st.pages||'—'}</div><div class="cap sec">${plural(st.pages,'страница','страницы','страниц')}</div></div><div><div class="num-l">${st.mins?fmtMinShort(st.mins):'—'}</div><div class="cap sec">чтения</div></div><div><div class="num-l">${st.q}</div><div class="cap sec">${plural(st.q,'цитата','цитаты','цитат')} и ${st.rf} ${plural(st.rf,'размышление','размышления','размышлений')}</div></div></div>
+        ${gc.target?`<div class="row" style="border-top:1px solid var(--b-subtle);margin-top:16px;padding-top:14px;gap:12px"><svg viewBox="0 0 40 40" width="40" height="40" style="transform:rotate(-90deg);flex:none"><circle cx="20" cy="20" r="16" fill="none" stroke="var(--lav-50)" stroke-width="5"/><circle cx="20" cy="20" r="16" fill="none" stroke="var(--violet)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-gp)}"/></svg><div><div class="b-mm">Цель ${Y}: ${gc.done} из ${gc.target}</div><div class="cap sec">${gc.left?`Осталось ${gc.left} ${plural(gc.left,'книга','книги','книг')} за ${gc.weeksLeft} ${plural(gc.weeksLeft,'неделю','недели','недель')}`:'Цель выполнена!'}</div></div></div>`:''}</div>
+      <div class="stack" style="margin-top:auto;padding-top:20px;gap:8px"><button class="btn primary block" type="button" data-sact="rate">${r?.rating?'Изменить оценку':'Оценить книгу'}</button><button class="btn secondary block" type="button" data-sact="next">Выбрать следующую книгу</button></div></div>`; },
+    act(a){ if(a==='rate') rateSheet(id); if(a==='next') nextSheet(id); } };
+  s.onClose=()=>{ sheets=[]; renderSheet(); go('home'); toast(`«${b.t}» — в прочитанных`); };
+  openSheet(s); render(); }
+function rateSheet(id,rid){ const b=bookById(id); const r=readings(id).find(x=>x.id===rid)||curReading(id); const st={rt:r?.rating||0,t:r?.review||''}; const LAB=['Поставь оценку',...RLAB.slice(1)];
+  openSheet({ draw(){ return {title:`Как тебе «${b.t.length>18?b.t.slice(0,17)+'…':b.t}»?`, body:`<div style="text-align:center"><div class="stars" style="justify-content:center">${[1,2,3,4,5].map(i=>`<button type="button" data-sact="star" data-r="${i}" aria-label="${i} из 5">${STAR(i<=st.rt)}</button>`).join('')}</div><p class="cap brand" style="margin-top:4px">${LAB[st.rt]}</p></div>
+      <div><label class="label" for="rv">Отзыв</label><div class="field"><textarea id="rv" rows="3" placeholder="Что запомнилось, кому посоветуешь">${esc(st.t)}</textarea></div><p class="hint">Необязательно</p></div>`, foot:`<button class="btn primary block" type="button" data-sact="ok" ${st.rt?'':'disabled'}>Сохранить оценку</button>`}; },
+   mount(){ $('rv').oninput=e=>st.t=e.target.value; },
+   act(a,el){ if(a==='star'){ st.rt=+el.dataset.r; renderSheetKeepFocus('rv'); } if(a==='ok'){ updBook(id,d=>{ const rr=d.readings.find(x=>x.id===r?.id)||d.readings[d.readings.length-1]; if(!rr) return; rr.rating=st.rt; if(st.t.trim()) rr.review=st.t.trim(); else delete rr.review; }); closeSheet(true); render(); toast('Оценка сохранена'); } } }); }
+function nextSheet(fromId){ const from=bookById(fromId); const busy=k=>['read','reading','dropped'].includes(status(k));
+  const course=booksOf(from.list).filter(b=>b.pos>from.pos&&!busy(b.id)); const feat=course.find(b=>status(b.id)==='want')||course[0]||nextBook();
+  const wants=allBooks().filter(b=>status(b.id)==='want'&&b.id!==feat?.id).slice(0,3);
+  const pagesOf=k=>readings(k).slice(-1)[0]?.pagesTotal;
+  openSheet({ draw(){ const fp=pagesOf(feat.id); const sameAuthor=feat.a&&feat.a===from.a&&!feat.a.startsWith('автор');
+    const row=b=>`<button class="pick" type="button" data-sact="pick" data-id="${b.id}"><span class="cover ${coverColor(b)}"></span><span class="grow"><span class="b-mm" style="display:block">${esc(b.t)}</span><span class="cap ter">${esc(b.a)}${pagesOf(b.id)?` · ${pagesOf(b.id)} стр.`:''}</span></span></button>`;
+    return {title:'Что читаем дальше?', body:`<button class="feat" type="button" data-sact="pick" data-id="${feat.id}"><span class="cover l ${coverColor(feat)}" style="width:80px;height:112px"></span><span class="grow"><span class="pill">Следующая по курсу</span><span class="t-m" style="display:block;margin-top:10px">${esc(feat.t)}</span><span class="cap sec">${esc(feat.a)}${fp?` · ${fp} стр.`:''}${sameAuthor?` · продолжение «${esc(from.t)}»`:feat.pos?` · №${feat.pos} в курсе`:''}</span></span></button>
+      ${wants.length?`<div><span class="label">Или из списка «Хочу прочитать»</span>${wants.map(row).join('')}</div>`:''}`,
+      foot:`<button class="btn primary block" type="button" data-sact="pick" data-id="${feat.id}">Начать «${esc(feat.t.length>18?feat.t.slice(0,17)+'…':feat.t)}»</button><button class="btn lav block" type="button" data-sact="later">Выберу позже</button>`}; },
+   act(a,el){ if(a==='pick'){ startSheet(el.dataset.id); } if(a==='later'){ sheets=[]; renderSheet(); go('home'); toast(`«${from.t}» — в прочитанных`); } } }); }
+
+/* --- review sheet --- */
+function reviewSheet(id){ const r=curReading(id); const st={t:r?.review||''};
+  openSheet({ draw(){ return {title:'Отзыв', body:`<div class="field"><textarea id="rv" rows="5" placeholder="Что запомнилось, кому посоветуешь">${esc(st.t)}</textarea></div>`, foot:`<button class="btn primary block" type="button" data-sact="ok">Сохранить</button>`}; },
+   mount(){ $('rv').oninput=e=>st.t=e.target.value; $('rv').focus(); },
+   act(a){ if(a==='ok'){ updBook(id,d=>{ const rr=d.readings[d.readings.length-1]; if(st.t.trim()) rr.review=st.t.trim(); else delete rr.review; }); closeSheet(true); render(); } } }); }
+
+/* --- filters (06.2) --- */
+function filtersSheet(){ const st={s:ui.fStatus,r:ui.fRegion,o:ui.sort};
+  const regs=[...new Set(booksOf('classics').map(b=>b.region).filter(Boolean))];
+  openSheet({ draw(){ const prevU={...ui}; Object.assign(ui,{fStatus:st.s,fRegion:st.r,sort:st.o}); const n=filteredBooks().length; Object.assign(ui,{fStatus:prevU.fStatus,fRegion:prevU.fRegion,sort:prevU.sort});
+    const c=(g,k,l)=>`<button class="chip sub" type="button" data-sact="f" data-g="${g}" data-k="${k}" aria-pressed="${st[g]===k}">${l}</button>`;
+    return {title:'Фильтры', body:`<div><span class="label">Статус</span><div class="wrap">${c('s','all','Все')}${c('s','reading','Читаю')}${c('s','want','Хочу прочитать')}${c('s','read','Прочитано')}${c('s','dropped','Бросила')}${c('s','none','Без статуса')}</div></div>
+      ${ui.list==='classics'?`<div><span class="label">Регион</span><div class="wrap">${c('r','all','Все регионы')}${regs.map(x=>c('r',x,x)).join('')}</div></div>`:''}
+      <div><span class="label">Сортировка</span><div class="wrap">${c('o','chrono',ui.list==='english'?'По уровню':'По хронологии')}${c('o','title','По названию')}${c('o','author','По автору')}</div></div>`,
+      foot:`<button class="btn primary block" type="button" data-sact="ok">Показать ${n} ${plural(n,'книгу','книги','книг')}</button><button class="btn lav block" type="button" data-sact="reset">Сбросить</button>`}; },
+   act(a,el){ if(a==='f'){ st[el.dataset.g]=el.dataset.k; renderSheet(); } if(a==='reset'){ st.s='all'; st.r='all'; st.o='chrono'; renderSheet(); } if(a==='ok'){ Object.assign(ui,{fStatus:st.s,fRegion:st.r,sort:st.o}); closeSheet(true); render(); } } }); }
+
+/* --- book picker --- */
+function pickerSheet(onPick,opts={}){ const st={q:''};
+  openSheet({ draw(){ const q=st.q.trim().toLowerCase(); const rd=readingBooks(); const withRec=[...new Set(allEntries().sort((a,b)=>byTime(b,a)).map(e=>e.bookId))].map(bookById).filter(Boolean);
+    const row=b=>`<button class="pick" type="button" data-sact="pick" data-id="${b.id}"><span class="cover ${coverColor(b)}"></span><span class="grow"><span class="b-mm" style="display:block">${esc(b.t)}</span><span class="cap ter">${esc(b.a)}${status(b.id)!=='none'?' · '+STATUS_NAME[status(b.id)]:''}</span></span></button>`;
+    let body=`<label class="search" style="background:var(--bg-subtle);flex:none">${I('search','ic-20')}<input id="pq" type="search" placeholder="Найти книгу" value="${esc(st.q)}" autocomplete="off"></label>`;
+    if(opts.allOption) body+=`<button class="pick" type="button" data-sact="pick" data-id="all"><span class="grow b-mm">Все книги</span></button>`;
+    if(q){ const res=allBooks().filter(b=>(!opts.onlyWithRecords||withRec.includes(b))&&(b.t.toLowerCase().includes(q)||(b.a||'').toLowerCase().includes(q))).slice(0,40); body+=res.length?`<div>${res.map(row).join('')}</div>`:`<p class="b-m sec">Ничего не нашлось</p>`; }
+    else { if(rd.length&&!opts.onlyWithRecords) body+=`<div><span class="label">Читаю сейчас</span>${rd.map(row).join('')}</div>`; const rec=withRec.filter(b=>opts.onlyWithRecords||!rd.includes(b)).slice(0,opts.onlyWithRecords?50:6); if(rec.length) body+=`<div><span class="label">${opts.onlyWithRecords?'Книги с записями':'Недавние записи'}</span>${rec.map(row).join('')}</div>`; if(!opts.onlyWithRecords){ const want=allBooks().filter(b=>status(b.id)==='want').slice(0,6); if(want.length) body+=`<div><span class="label">Хочу прочитать</span>${want.map(row).join('')}</div>`; body+=`<p class="cap ter">Поиск — по всем ${allBooks().length} книгам из списков</p>`; } }
+    return {title:opts.title||'Выбор книги', body}; },
+   mount(){ const i=$('pq'); i.oninput=e=>{ st.q=e.target.value; const pos=i.selectionStart; renderSheet(); const n=$('pq'); n.focus(); n.setSelectionRange(pos,pos); }; },
+   act(a,el){ if(a==='pick'){ sheets.pop(); onPick(el.dataset.id); renderSheet(); } } }); }
+
+/* --- entry sheet (01–03) --- */
+function entrySheet(preset={}){
+  const ex=preset.id?{...docs[preset.id]}:null;
+  const type0=ex?(ex.kind==='reflection'?'reflection':ex.kind):(preset.type||'session');
+  const defBook=preset.book||(ex?ex.bookId:'')||(readingBooks()[0]?.id||'');
+  const st={type:type0, book:defBook, page:ex?.kind==='session'?String(ex.pageTo):'', minutes:ex?.minutes||0, minOther:false, when:'today', date:ex?.date||today(), html:ex?.html||'', showThoughts:!!(ex?.html), title:ex?.title||'', qtext:ex?.kind==='quote'?ex.text:'', qpage:ex?.page||'', comment:ex?.comment||'', tried:false, confirmFinish:false};
+  if(ex){ st.when=st.date===today()?'today':st.date===addDays(today(),-1)?'yesterday':'other'; }
+  const snap=JSON.stringify(st);
+  const s={ live:false,
+    isDirty(){ const c={...st,tried:false}; return JSON.stringify(c)!==JSON.stringify({...JSON.parse(snap),tried:false}); },
+    draw(){
+      if(st.confirmFinish){ const b=bookById(st.book); return {title:'Дочитала?', body:`<p class="b-l">Это последняя страница «${esc(b.t)}». Отметить книгу прочитанной?</p>`, foot:`<button class="btn primary block" type="button" data-sact="finishYes">Да, дочитала</button><button class="btn lav block" type="button" data-sact="finishNo">Ещё нет</button>`}; }
+      const b=st.book?bookById(st.book):null; const r=b?curReading(b.id):null; const pt=r&&status(b.id)==='reading'?r.pagesTotal:null; const lp=b&&status(b.id)==='reading'?lastPage(b.id):0;
+      const seg=ex?'':`<div class="seg">${[['session','Сессия'],['reflection','Размышление'],['quote','Цитата']].map(([k,l])=>`<button type="button" data-sact="type" data-k="${k}" aria-pressed="${st.type===k}">${l}</button>`).join('')}</div>`;
+      const bookErr=st.tried&&!st.book;
+      const bookF=`<div><span class="label">Книга</span><button class="bookfield ${bookErr?'err':''}" type="button" data-sact="pickBook">${b?`<span class="cover ${coverColor(b)}"></span><span class="grow"><span class="b-mm" style="display:block">${esc(b.t)}</span><span class="cap sec">${esc(b.a)}${pt?` · стр. ${lp} из ${pt}`:''}</span></span>`:`<span class="grow b-m ter">Выбери книгу</span>`}${I('chevron-right')}</button>${bookErr?`<p class="hint err">Выбери книгу — без неё запись не сохранить</p>`:''}</div>`;
+      let body=seg, btn='';
+      if(st.type==='session'){
+        const p=parseInt(st.page,10); let cls='', hint='';
+        if(st.page!==''&&p>=0){ if(pt&&p>pt){ cls='err'; hint=`<p class="hint err">В книге всего ${pt} стр.</p>`; } else if(p<lp){ cls='warn'; hint=`<p class="hint warn">Меньше, чем в прошлый раз (${lp}). Перечитываешь? Сохранить можно</p>`; } else hint=`<p class="hint brand">+${p-lp} стр. с прошлого раза</p>`; }
+        else if(st.tried){ cls='err'; hint=`<p class="hint err">Укажи страницу, на которой остановилась</p>`; }
+        const mins=[15,30,45,60,90,120];
+        body+=bookF+`<div><label class="label" for="pg">Остановилась на странице</label><div class="field ${cls}"><input id="pg" inputmode="numeric" placeholder="${lp?`В прошлый раз — ${lp}`:'Номер страницы'}" value="${esc(st.page)}" autocomplete="off">${pt?`<span class="suf">из ${pt}</span>`:''}</div>${hint}</div>
+          <div><span class="label">Сколько читала</span><div class="hscroll">${mins.map(m=>`<button class="chip sub" type="button" data-sact="min" data-m="${m}" aria-pressed="${!st.minOther&&+st.minutes===m}">${fmtMin(m).replace('1 ч 30 мин','1,5 часа').replace('2 ч','2 часа').replace('1 ч','1 час')}</button>`).join('')}<button class="chip sub" type="button" data-sact="minOther" aria-pressed="${st.minOther}">Другое</button></div>${st.minOther?`<div class="field" style="margin-top:8px"><input id="mo" inputmode="numeric" placeholder="Минут" value="${st.minutes||''}"><span class="suf">мин</span></div>`:''}</div>
+          <div><span class="label">Когда</span>${whenChips(st)}</div>
+          ${st.showThoughts?`<div><span class="label">Мысли</span>${editorHtml('ed',st.html,'Что зацепило, что непонятно…')}<p class="hint">Картинку можно вставить из буфера</p></div>`:`<button class="btn m lav" type="button" data-sact="thoughts" style="align-self:flex-start">${I('plus')}Добавить мысли</button>`}`;
+        btn=`<button class="btn primary block" type="button" data-sact="save" ${st.book&&st.page!==''&&!(pt&&p>pt)?'':'aria-disabled="true" style="background:var(--bg-disabled);color:var(--t-disabled)"'}>${ex?'Сохранить':'Добавить сессию'}</button>`;
+      } else if(st.type==='quote'){
+        const err=st.tried&&!st.qtext.trim();
+        body+=`<div><label class="label" for="qt">Цитата</label><div class="field q-field ${err?'err':''}"><textarea id="qt" rows="4" placeholder="Текст цитаты">${esc(st.qtext)}</textarea></div>${err?`<p class="hint err">Добавь текст цитаты</p>`:''}</div>`+bookF+
+          `<div><label class="label" for="qp">Страница</label><div class="field"><input id="qp" inputmode="numeric" value="${esc(st.qpage)}" placeholder="Необязательно">${pt?`<span class="suf">из ${pt}</span>`:''}</div></div>
+           <div><label class="label" for="qc">Комментарий</label><div class="field"><textarea id="qc" rows="2" placeholder="Почему запомнилось">${esc(st.comment)}</textarea></div></div>`;
+        btn=`<button class="btn primary block" type="button" data-sact="save">${ex?'Сохранить':'Сохранить цитату'}</button>`;
+      } else {
+        const err=st.tried&&!plainText(st.html).trim()&&!/<img/.test(st.html);
+        body+=bookF+`<div><span class="label">Когда</span>${whenChips(st)}</div><div><label class="label" for="rt">Заголовок</label><div class="field"><input id="rt" value="${esc(st.title)}" placeholder="Необязательно"></div></div>
+          <div><span class="label">Текст</span>${editorHtml('ed',st.html,'Мысли, выводы, схемы… Картинку можно вставить из буфера или перетащить',err)}${err?`<p class="hint err">Напиши хотя бы пару слов или добавь картинку</p>`:''}</div>`;
+        btn=`<button class="btn primary block" type="button" data-sact="save">${ex?'Сохранить':'Сохранить размышление'}</button>`;
+      }
+      return {title:ex?'Изменить запись':'Новая запись', body, foot:btn};
+    },
+    mount(){
+      const on=(id,f)=>{const el=$(id); if(el) el.oninput=f;};
+      on('pg',e=>{ st.page=e.target.value.replace(/\D/g,''); updateSessionHint(); });
+      on('mo',e=>{ st.minutes=parseInt(e.target.value.replace(/\D/g,''),10)||0; });
+      on('qt',e=>st.qtext=e.target.value); on('qp',e=>st.qpage=e.target.value); on('qc',e=>st.comment=e.target.value); on('rt',e=>st.title=e.target.value);
+      bindWhen(st); if($('ed')) mountEditor('ed',h=>st.html=h);
+      if(!ex&&st.type==='quote'&&!st.qtext) $('qt')?.focus();
+    },
+    act(a,el){
+      if(a==='type'){ st.type=el.dataset.k; st.tried=false; renderSheet(); }
+      if(a==='pickBook') pickerSheet(id=>{ st.book=id; });
+      if(a==='min'){ st.minOther=false; st.minutes=+st.minutes===+el.dataset.m?0:+el.dataset.m; renderSheet(); }
+      if(a==='minOther'){ st.minOther=!st.minOther; renderSheet(); }
+      if(a==='thoughts'){ st.showThoughts=true; renderSheet(); setTimeout(()=>$('ed')?.focus(),30); }
+      if(a==='finishYes'){ finishBook(st.book); sheets=[]; renderSheet(); go('home'); }
+      if(a==='finishNo'){ sheets=[]; renderSheet(); go(ui.view==='book'?'book':ui.view); toast('Сессия записана'); }
+      if(a==='save') save();
+    }
+  };
+  function updateSessionHint(){ renderSheetKeepFocus('pg'); }
+  function save(){
+    st.tried=true;
+    const b=st.book?bookById(st.book):null;
+    if(st.type==='session'){
+      const p=parseInt(st.page,10);
+      if(!b||st.page===''||!(p>=0)){ renderSheet(); return; }
+      if(status(b.id)!=='reading'&&!ex){ updBook(b.id,d=>{ const rr=d.readings[d.readings.length-1]; if(!rr||rr.finishedAt){ d.readings.push({id:uid('r'),startedAt:st.date}); } else delete rr.droppedAt; d.status='reading'; }); }
+      const r=curReading(b.id); if(r?.pagesTotal&&p>r.pagesTotal){ renderSheet(); return; }
+      const from=ex?ex.pageFrom:lastPage(b.id);
+      const html=st.showThoughts?sanitize(st.html):''; const text=plainText(html).trim();
+      const doc={kind:'session',bookId:b.id,readingId:ex?.readingId||r.id,date:st.date,pageFrom:from,pageTo:p,c:ex?.c||Date.now()};
+      if(st.minutes) doc.minutes=+st.minutes; if(text||/<img/.test(html)){ doc.html=html; doc.text=text; }
+      setDoc(preset.id||uid('s_'),doc); updBook(b.id,()=>{});
+      if(r?.pagesTotal&&p===r.pagesTotal&&!ex){ sheets=[]; render(); askFinish(b.id); return; }
+      done(ex?'Сессия сохранена':`Сессия записана · +${Math.max(0,p-from)} стр.`); return;
+    }
+    if(st.type==='quote'){
+      if(!st.qtext.trim()||!b){ renderSheet(); return; }
+      const r=curReading(b.id); const doc={kind:'quote',bookId:b.id,text:st.qtext.trim(),date:ex?.date||today(),c:ex?.c||Date.now()};
+      if(r) doc.readingId=r.id; if(st.qpage.trim()) doc.page=st.qpage.trim(); if(st.comment.trim()) doc.comment=st.comment.trim();
+      setDoc(preset.id||uid('q_'),doc); done(ex?'Цитата сохранена':'Цитата сохранена'); return;
+    }
+    const html=sanitize(st.html); const text=plainText(html).trim();
+    if(!b||(!text&&!/<img/.test(html))){ renderSheet(); return; }
+    const doc={kind:'reflection',bookId:b.id,date:st.date,html,text,c:ex?.c||Date.now()}; if(st.title.trim()) doc.title=st.title.trim();
+    setDoc(preset.id||uid('rf_'),doc); done(ex?'Размышление сохранено':'Размышление сохранено');
+  }
+  function done(msg){ sheets=[]; renderSheet(); render(); toast(msg); }
+  openSheet(s);
+}
+function renderSheetKeepFocus(id){ const el=$(id); const pos=el?el.selectionStart:null; renderSheet(); const n=$(id); if(n){ n.focus(); if(pos!=null) try{n.setSelectionRange(pos,pos);}catch(e){} } }
+function finishBook(id){ updBook(id,d=>{ const rr=d.readings[d.readings.length-1]; rr.finishedAt=today(); if(rr.pagesTotal) rr.page=rr.pagesTotal; d.status='read'; }); }
+
+/* --- view entry (02.9 / 03.7 / 07.11) --- */
+function viewSheet(id){ const s={ live:true, draw(){ const e=docs[id]; if(!e) return {title:'Запись удалена', body:''}; const b=bookById(e.bookId);
+  const bookRowH=b?`<button class="bookfield" type="button" data-sact="toBook"><span class="cover ${coverColor(b)}"></span><span class="grow"><span class="b-mm" style="display:block">${esc(b.t)}</span><span class="cap sec">${esc(b.a)}${e.page?` · стр. ${esc(e.page)}`:''} · ${e.kind==='quote'?'добавлена':'запись от'} ${dLong(e.date)}</span></span>${I('chevron-right')}</button>`:'';
+  const acts=(copy)=>`<div class="actions">${copy?`<button class="act" type="button" data-sact="copy"><span class="ib">${I('document')}</span>Копировать</button>`:''}<button class="act" type="button" data-sact="edit"><span class="ib">${I('journal')}</span>Изменить</button><button class="act danger" type="button" data-sact="del"><span class="ib">${I('close')}</span>${s.confirmDel?'Точно удалить?':'Удалить'}</button></div>`;
+  if(e.kind==='quote') return {title:'Цитата', body:`<div class="q-l">«${esc(e.text)}»</div>${bookRowH}${e.comment?`<div class="note"><span class="cap brand" style="display:block">Почему запомнилось</span><span class="b-m">${esc(e.comment)}</span></div>`:''}${acts(true)}`};
+  if(e.kind==='session') return {title:`Сессия · ${dLong(e.date)}`, body:`<div class="duo"><div class="tile"><div class="num-l">+${gain(e)}</div><div class="cap sec">стр. ${e.pageFrom||0} → ${e.pageTo}</div></div><div class="tile"><div class="num-l">${e.minutes?fmtMinShort(+e.minutes):'—'}</div><div class="cap sec">чтения</div></div></div>${e.html?`<div class="rich b-l">${sanitize(e.html)}</div>`:''}${bookRowH}${acts(false)}`};
+  return {title:e.title||'Размышление', body:`<div class="rich b-l">${sanitize(e.html||'')}</div>${bookRowH}${acts(true)}`}; },
+  act(a){ const e=docs[id];
+    if(a==='toBook'){ sheets=[]; renderSheet(); openBook(e.bookId); }
+    if(a==='edit'){ sheets.pop(); entrySheet({id}); }
+    if(a==='copy'){ const t=e.kind==='quote'?`«${e.text}»${bookById(e.bookId)?' — '+bookById(e.bookId).t:''}`:(e.title?e.title+'\n\n':'')+(e.text||''); try{ navigator.clipboard.writeText(t).then(()=>toast('Скопировано'),()=>toast('Не удалось скопировать','err')); }catch(err){ toast('Не удалось скопировать','err'); } }
+    if(a==='del'){ if(!s.confirmDel){ s.confirmDel=true; renderSheet(); return; } delDoc(id); sheets=[]; renderSheet(); render(); toast('Запись удалена'); }
+  } }; openSheet(s); }
+
+/* --- 08.6–08.7 · books in journal --- */
+function journalPicker(){ const st={q:'',open:{}};
+  openSheet({ draw(){ const all=allEntries(); const cnt={}; for(const e of all) cnt[e.bookId]=(cnt[e.bookId]||0)+1;
+    const books=Object.keys(cnt).map(bookById).filter(Boolean); const q=st.q.trim().toLowerCase();
+    const sel=f=>ui.jBook===f;
+    const rowB=b=>`<button class="pick ${sel(b.id)?'':''}" type="button" data-sact="pick" data-id="${b.id}"><span class="cover ${coverColor(b)}"></span><span class="grow"><span class="b-mm" style="display:block">${esc(b.t)}</span><span class="cap ter">${esc(b.a)} · ${cnt[b.id]} ${plural(cnt[b.id],'запись','записи','записей')}</span></span>${sel(b.id)?I('check'):''}</button>`;
+    let body=`<label class="search" style="background:var(--bg-subtle);flex:none">${I('search','ic-20')}<input id="jpq" type="search" placeholder="Название или автор" value="${esc(st.q)}" autocomplete="off"></label>`;
+    if(q){ const res=books.filter(b=>b.t.toLowerCase().includes(q)||(b.a||'').toLowerCase().includes(q)); body+=res.length?`<div>${res.map(rowB).join('')}</div>`:`<p class="b-m sec">Среди книг с записями такой нет</p>`; }
+    else {
+      body+=`<button class="opt ${sel('all')?'sel':''}" type="button" data-sact="pick" data-id="all"><span class="e-ico" style="width:44px;height:44px;border-radius:var(--rf)">${I('book')}</span><span class="grow"><span class="b-mm" style="display:block">Все книги</span><span class="cap ter">${books.length} ${plural(books.length,'книга','книги','книг')} · ${all.length} ${plural(all.length,'запись','записи','записей')}</span></span>${sel('all')?I('check','chk'):''}</button>`;
+      const rd=books.filter(b=>status(b.id)==='reading'); if(rd.length) body+=`<div><span class="label">Читаю сейчас</span>${rd.map(rowB).join('')}</div>`;
+      const rec=[...new Set(all.sort((a,b)=>byTime(b,a)).map(e=>e.bookId))].map(bookById).filter(b=>b&&!rd.includes(b)).slice(0,4); if(rec.length) body+=`<div><span class="label">Недавние записи</span>${rec.map(rowB).join('')}</div>`;
+      const lists=LISTS.map(l=>{ const lb=books.filter(b=>b.list===l.key); if(!lb.length) return ''; const eras=[...new Set(lb.map(eraOf))]; const n=lb.reduce((a,b)=>a+cnt[b.id],0);
+        return `<div class="scope"><button type="button" data-sact="pick" data-id="list:${l.key}"><span class="grow"><span class="b-mm" style="display:block">${esc(l.name)}</span><span class="cap ter">весь список · ${lb.length} ${plural(lb.length,'книга','книги','книг')} с записями</span></span>${sel('list:'+l.key)?I('check'):I('chevron-right','ic-20')}</button>${eras.map(e=>{ const eb=lb.filter(b=>eraOf(b)===e); const en=eb.reduce((a,b)=>a+cnt[b.id],0); const f=`era:${l.key}:${e}`; return `<button type="button" data-sact="pick" data-id="${esc(f)}"><span class="grow"><span class="b-mm brand" style="display:block">${esc(e)} — все записи</span><span class="cap ter">${eb.length} ${plural(eb.length,'книга','книги','книг')} · ${en} ${plural(en,'запись','записи','записей')}</span></span>${sel(f)?I('check'):I('chevron-right','ic-20')}</button>`; }).join('')}</div>`; }).join('');
+      if(lists) body+=`<div class="stack" style="gap:8px"><span class="label" style="margin:0">По спискам</span>${lists}</div>`;
+      body+=`<p class="cap ter">Книги без записей в дневнике не показываются</p>`; }
+    return {title:'Книги в дневнике', body}; },
+   mount(){ const i=$('jpq'); i.oninput=e=>{ st.q=e.target.value; const pos=i.selectionStart; renderSheet(); const n=$('jpq'); n.focus(); n.setSelectionRange(pos,pos); }; },
+   act(a,el){ if(a==='pick'){ ui.jBook=el.dataset.id; closeSheet(true); render(); } } }); }
+/* --- 08.3 · calendar --- */
+function calendarSheet(){ const t=parseYmd(ui.jDay||today()); const st={y:t.getFullYear(),m:t.getMonth()};
+  openSheet({ draw(){ const cnt={}; for(const e of allEntries().filter(e=>jMatch(e.bookId))) cnt[e.date]=(cnt[e.date]||0)+1;
+    const first=new Date(st.y,st.m,1), dim=new Date(st.y,st.m+1,0).getDate(), off=(first.getDay()+6)%7, td=today();
+    const MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    const isCur=st.y===new Date().getFullYear()&&st.m===new Date().getMonth();
+    let cells=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(w=>`<span class="wd">${w}</span>`).join('')+'<span></span>'.repeat(off);
+    for(let d=1;d<=dim;d++){ const k=`${st.y}-${pad(st.m+1)}-${pad(d)}`; const n=cnt[k]||0; const l=n===0?'':n===1?'l1':n===2?'l2':n<5?'l3':'l4'; cells+=`<button type="button" data-sact="day" data-d="${k}" class="${k===td?'today':l} ${k===ui.jDay?'sel':''}" ${k>td||!n?'disabled':''} aria-label="${d} ${MON_G[st.m]}${n?`: ${n} ${plural(n,'запись','записи','записей')}`:''}">${d}</button>`; }
+    return {title:'Календарь', body:`<div class="row between"><span class="t-s">${MN[st.m]} ${st.y}</span><div class="row"><button class="ibtn subtle" type="button" data-sact="prev" aria-label="Предыдущий месяц">${I('chevron-left')}</button><button class="ibtn subtle" type="button" data-sact="next" aria-label="Следующий месяц" ${isCur?'disabled':''}>${I('chevron-right')}</button></div></div>
+      <div class="cal">${cells}</div><div class="legend" style="margin-top:0">Меньше <i style="background:var(--bg-subtle)"></i><i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> больше записей</div>
+      <p class="cap ter">Тап по дню — записи этого дня. Сюда же ведёт тап по клетке активности на Главной</p>`}; },
+   act(a,el){ if(a==='prev'){ st.m--; if(st.m<0){st.m=11;st.y--;} renderSheet(); } if(a==='next'){ st.m++; if(st.m>11){st.m=0;st.y++;} renderSheet(); } if(a==='day'){ ui.jDay=el.dataset.d; closeSheet(true); go('journal'); } } }); }
+/* --- add custom book --- */
+function addBookSheet(){ const st={t:'',a:'',y:'',list:ui.list,err:false};
+  openSheet({ isDirty(){ return !!(st.t||st.a); }, draw(){ return {title:'Добавить книгу', body:`<div><label class="label" for="nt">Название</label><div class="field ${st.err?'err':''}"><input id="nt" value="${esc(st.t)}"></div>${st.err?`<p class="hint err">Укажи название</p>`:''}</div><div><label class="label" for="na">Автор</label><div class="field"><input id="na" value="${esc(st.a)}"></div></div><div><label class="label" for="ny">Год</label><div class="field"><input id="ny" inputmode="numeric" value="${esc(st.y)}" placeholder="Напр. 1869 или −400"></div></div><div><span class="label">Список</span><div class="wrap">${LISTS.map(l=>`<button class="chip sub" type="button" data-sact="l" data-k="${l.key}" aria-pressed="${st.list===l.key}">${esc(l.name)}</button>`).join('')}</div></div>`, foot:`<button class="btn primary block" type="button" data-sact="ok">Добавить</button>`}; },
+   mount(){ $('nt').oninput=e=>st.t=e.target.value; $('na').oninput=e=>st.a=e.target.value; $('ny').oninput=e=>st.y=e.target.value; },
+   act(a,el){ if(a==='l'){ st.list=el.dataset.k; renderSheet(); } if(a==='ok'){ if(!st.t.trim()){ st.err=true; renderSheet(); return; } const id=uid('u'); const y=parseInt(st.y.replace(/[−–—]/g,'-'),10); setDoc('bk_'+id,{kind:'book',bookId:id,status:'none',readings:[],custom:{t:st.t.trim(),a:st.a.trim(),y:Number.isFinite(y)?y:0,list:st.list},c:Date.now(),u:Date.now()}); sheets=[]; renderSheet(); ui.list=st.list; openBook(id); toast('Книга добавлена'); } } }); }
+
+/* ================= Rich text editor ================= */
+const OK_TAGS={P:'p',BR:'br',B:'strong',STRONG:'strong',I:'em',EM:'em',U:'u',H1:'h3',H2:'h3',H3:'h3',H4:'h3',UL:'ul',OL:'ol',LI:'li',BLOCKQUOTE:'blockquote',DIV:'p',IMG:'img'};
+const DROP=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','TEMPLATE','svg','SVG','META','LINK','TITLE','HEAD','NOSCRIPT']);
+function sanitize(html){ const tpl=document.createElement('template'); tpl.innerHTML=html||''; const out=document.createElement('div');
+  const walk=(src,dst)=>{ for(const n of [...src.childNodes]){ if(n.nodeType===3){ dst.appendChild(document.createTextNode(n.nodeValue)); continue; } if(n.nodeType!==1||DROP.has(n.tagName)) continue; const t=OK_TAGS[n.tagName]; if(!t){ walk(n,dst); continue; }
+    if(t==='img'){ const id=n.getAttribute('data-asset'), src=n.getAttribute('src')||''; let u=null; const sbp=n.getAttribute('data-sb');
+      if(sbp&&/^[0-9a-f-]{36}\/[A-Za-z0-9_-]{1,80}\.(jpg|png|webp)$/.test(sbp)){ const im=document.createElement('img'); im.setAttribute('src',IMG_BASE+sbp); im.setAttribute('data-sb',sbp); im.setAttribute('alt',''); im.setAttribute('loading','lazy'); dst.appendChild(im); continue; }
+      if(id&&/^[A-Za-z0-9_-]{1,80}$/.test(id)){ const im=document.createElement('img'); im.setAttribute('data-asset',id); im.setAttribute('alt','Картинка ждёт переноса'); dst.appendChild(im); continue; }
+      if(/^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(src)) u=src; if(u){ const im=document.createElement('img'); im.setAttribute('src',u); im.setAttribute('alt',''); im.setAttribute('loading','lazy'); dst.appendChild(im); } continue; }
+    if(t==='p'&&dst.tagName==='P'){ walk(n,dst); dst.appendChild(document.createElement('br')); continue; }
+    const el=document.createElement(t); dst.appendChild(el); if(t!=='br') walk(n,el); } };
+  walk(tpl.content,out); return out.innerHTML.replace(/(<p>(<br>)?<\/p>\s*)+$/,'').trim(); }
+function plainText(html){ const d=document.createElement('div'); d.innerHTML=(html||'').replace(/<\/(p|h3|li|blockquote)>|<br>/g,'$&\n'); return d.textContent.replace(/\n{3,}/g,'\n\n'); }
+const ED_BTNS=[['h3','type','Заголовок'],['bold','bold','Жирный'],['italic','italic','Курсив'],['underline','underline','Подчёркнутый'],['insertUnorderedList','list-bullet','Список'],['insertOrderedList','list-number','Нумерованный список'],['blockquote','quote','Цитата'],['image','image','Картинка']];
+function editorHtml(id,html,ph,err){ return `<div class="editor ${err?'err':''}"><div class="e-bar" role="toolbar" aria-label="Форматирование">${ED_BTNS.map(([c,ic,l])=>`<button type="button" data-cmd="${c}" aria-label="${l}" title="${l}" aria-pressed="false">${I(ic,'ic-20')}</button>`).join('')}</div><div class="e-area" id="${id}" contenteditable="true" role="textbox" aria-multiline="true" data-ph="${esc(ph)}">${sanitize(html)}</div><input type="file" id="${id}-f" accept="image/*" multiple hidden></div>`; }
+let savedRange=null;
+function blockOf(){ try{ return (document.queryCommandValue('formatBlock')||'').toLowerCase().replace(/[<>]/g,''); }catch(e){ return ''; } }
+function syncBar(area){ const bar=area.parentElement.querySelector('.e-bar'); const blk=blockOf(); bar.querySelectorAll('[data-cmd]').forEach(b=>{ const c=b.dataset.cmd; let on=false; try{ on=c==='h3'||c==='blockquote'?blk===c:c==='image'?false:document.queryCommandState(c); }catch(e){} b.setAttribute('aria-pressed',on); }); }
+function restoreRange(area){ const sel=getSelection(); area.focus(); if(savedRange&&area.contains(savedRange.startContainer)){ sel.removeAllRanges(); sel.addRange(savedRange); } else { const r=document.createRange(); r.selectNodeContents(area); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); } }
+async function compress(file,max,q){ const url=URL.createObjectURL(file); try{ const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url;}); const k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)); const w=Math.round(img.naturalWidth*k), h=Math.round(img.naturalHeight*k); const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(img,0,0,w,h); return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('enc')),'image/jpeg',q)); } finally{ URL.revokeObjectURL(url); } }
+const toDataUrl=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b);});
+async function addImage(file,area,onChange){ if(!file||!/^image\//.test(file.type)) return; toast('Добавляю картинку…');
+  try{ let html; if(sb&&me&&navigator.onLine){ const blob=await compress(file,1600,.85); const path=`${me}/${uid('i')}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'}); if(error) throw error; html=`<img src="${IMG_BASE+path}" data-sb="${path}" alt="">`; } else html=`<img src="${await toDataUrl(await compress(file,900,.72))}" alt="">`;
+    if(!document.body.contains(area)) return; restoreRange(area); document.execCommand('insertHTML',false,html+'<p><br></p>'); onChange(area.innerHTML); toast('Картинка добавлена'); }
+  catch(e){ toast('Не удалось добавить картинку. Попробуй другой файл','err'); } }
+function mountEditor(id,onChange){ const area=$(id); if(!area) return; try{ document.execCommand('defaultParagraphSeparator',false,'p'); }catch(e){}
+  const bar=area.parentElement.querySelector('.e-bar'), file=$(id+'-f');
+  bar.addEventListener('mousedown',e=>{ if(e.target.closest('button')) e.preventDefault(); });
+  bar.addEventListener('click',e=>{ const b=e.target.closest('[data-cmd]'); if(!b) return; const c=b.dataset.cmd; if(c==='image'){ file.click(); return; } restoreRange(area); if(c==='h3'||c==='blockquote') document.execCommand('formatBlock',false,blockOf()===c?'<p>':`<${c}>`); else document.execCommand(c,false,null); syncBar(area); onChange(area.innerHTML); });
+  file.addEventListener('change',()=>{ [...file.files].forEach(f=>addImage(f,area,onChange)); file.value=''; });
+  area.addEventListener('input',()=>onChange(area.innerHTML));
+  area.addEventListener('paste',e=>{ const fs=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/')); if(fs.length){ e.preventDefault(); fs.forEach(f=>addImage(f,area,onChange)); return; } const h=e.clipboardData?.getData('text/html'); if(h){ e.preventDefault(); document.execCommand('insertHTML',false,sanitize(h)); onChange(area.innerHTML); } });
+  area.addEventListener('dragover',e=>{ if([...(e.dataTransfer?.items||[])].some(i=>i.kind==='file')) e.preventDefault(); });
+  area.addEventListener('drop',e=>{ const fs=[...(e.dataTransfer?.files||[])].filter(f=>f.type.startsWith('image/')); if(fs.length){ e.preventDefault(); fs.forEach(f=>addImage(f,area,onChange)); } });
+  area.addEventListener('keyup',()=>syncBar(area)); area.addEventListener('mouseup',()=>syncBar(area)); }
+document.addEventListener('selectionchange',()=>{ const sel=getSelection(); if(!sel||!sel.rangeCount) return; const n=sel.anchorNode; const area=n&&(n.nodeType===1?n:n.parentElement)?.closest?.('.e-area'); if(area){ savedRange=sel.getRangeAt(0).cloneRange(); syncBar(area); } });
+
+/* ================= Import images from old Bookz ================= */
+$('importFile').addEventListener('change',async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{ const j=JSON.parse(await f.text()); if(j.kind!=='bookz-images'||!j.images) throw new Error('format');
+    if(!sb||!me||!navigator.onLine){ toast('Нужна сеть, чтобы загрузить картинки','err'); return; }
+    const map={}; let n=0; const ids=Object.keys(j.images);
+    for(const id of ids){ toast(`Переношу картинки… ${n+1} из ${ids.length}`); const blob=await (await fetch(j.images[id])).blob(); const path=`${me}/${id}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000',upsert:true}); if(error) throw error; map[id]=path; n++; }
+    for(const [key,d] of Object.entries(docs)){ if(!/data-asset=/.test(d.html||'')) continue; const tpl=document.createElement('template'); tpl.innerHTML=d.html;
+      tpl.content.querySelectorAll('img[data-asset]').forEach(im=>{ const p=map[im.getAttribute('data-asset')]; if(p){ im.removeAttribute('data-asset'); im.setAttribute('data-sb',p); im.setAttribute('src',IMG_BASE+p); } });
+      setDoc(key,{...d,html:sanitize(tpl.innerHTML)}); }
+    render(); toast(`Готово: ${n} ${plural(n,'картинка перенесена','картинки перенесены','картинок перенесено')}`);
+  }catch(err){ toast('Это не тот файл. Нужен bookz-images.json','err'); } });
+
+/* ================= Toast ================= */
+let tt; function toast(msg,kind){ $('toastRoot').innerHTML=`<div class="toast ${kind||''}" role="status"><span class="ok">${I(kind==='err'?'close':'check','ic-20')}</span><span>${esc(msg)}</span></div>`; clearTimeout(tt); tt=setTimeout(()=>$('toastRoot').innerHTML='',2800); }
+
+/* ================= Events ================= */
+document.addEventListener('click',e=>{
+  const sa=e.target.closest('[data-sact]');
+  if(sa&&$('sheets').contains(sa)){ const a=sa.dataset.sact; const s=sheets[sheets.length-1];
+    if(a==='scrim'||a==='close'){ closeSheet(); return; } if(a==='exitYes'){ closeSheet(true); return; } if(a==='exitNo'){ s.confirmExit=false; renderSheet(); return; }
+    if(s&&s.act) s.act(a,sa); return; }
+  const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }
+  const hd=e.target.closest('[data-day]'); if(hd&&$('view').contains(hd)){ go('journal',{jDay:hd.dataset.day,jKind:'all',jBook:'all'}); return; }
+  const t=e.target.closest('[data-act]'); if(!t) return; const a=t.dataset.act;
+  if(a==='importImages') $('importFile').click();
+  else if(a==='new') entrySheet({type:t.dataset.type,book:t.dataset.book});
+  else if(a==='book') openBook(t.dataset.id);
+  else if(a==='back') go(ui.prevView||'home');
+  else if(a==='status') statusSheet(t.dataset.id);
+  else if(a==='setStatus') applyStatus(t.dataset.id,t.dataset.s);
+  else if(a==='start') startSheet(t.dataset.id);
+  else if(a==='resume') applyStatus(t.dataset.id,'reading');
+  else if(a==='editBook') editBookSheet(t.dataset.id);
+  else if(a==='review') rateSheet(ui.bookId,t.dataset.rid);
+  else if(a==='readingSel'){ ui.readingSel=t.dataset.id; render(); }
+  else if(a==='rate'){ const v=+t.dataset.r, rid=t.dataset.rid; updBook(ui.bookId,d=>{ const rr=d.readings.find(x=>x.id===rid)||d.readings[d.readings.length-1]; if(rr) rr.rating=rr.rating===v?0:v; }); render(); }
+  else if(a==='goal') goalSheet();
+  else if(a==='weekPrev'){ ui.weekOffset--; render(); } else if(a==='weekNext'){ ui.weekOffset=Math.min(0,ui.weekOffset+1); render(); }
+  else if(a==='period'){ ui.statPeriod=t.dataset.p; render(); }
+  else if(a==='allQuotes') go('journal',{jKind:'quote',jBook:'all'});
+  else if(a==='search') go('journal',{jSearch:''});
+  else if(a==='viewEntry') viewSheet(t.dataset.id);
+  else if(a==='list'){ Object.assign(ui,{list:t.dataset.k,era:'all',fRegion:'all',fStatus:'all'}); render(); }
+  else if(a==='fStatus'){ ui.fStatus=ui.fStatus===t.dataset.k?'all':t.dataset.k; render(); }
+  else if(a==='era'){ ui.era=t.dataset.k; render(); }
+  else if(a==='filters') filtersSheet();
+  else if(a==='resetF'){ Object.assign(ui,{fStatus:'all',fRegion:'all',era:'all',q:'',sort:'chrono'}); render(); }
+  else if(a==='addBook') addBookSheet();
+  else if(a==='bookTab'){ ui.bookTab=t.dataset.k; render(); }
+  else if(a==='jKind'){ ui.jKind=t.dataset.k; render(); }
+  else if(a==='jBook'){ ui.jBook=ui.jBook===t.dataset.id?'all':t.dataset.id; render(); }
+  else if(a==='jPick') journalPicker();
+  else if(a==='calendar') calendarSheet();
+  else if(a==='jAllDays'){ ui.jDay=null; render(); }
+  else if(a==='jSearchOpen'){ ui.jSearch=ui.jSearch==null?'':null; render(); setTimeout(()=>$('jq')?.focus(),20); }
+  else if(a==='jSearchClose'){ ui.jSearch=null; render(); }
+});
+document.addEventListener('input',e=>{ if(e.target.id==='lq'){ ui.q=e.target.value; render(); } if(e.target.id==='jq'){ ui.jSearch=e.target.value; render(); } });
+window.addEventListener('hashchange',()=>{ const h=location.hash.slice(1); if(['home','lists','journal'].includes(h)&&h!==ui.view) go(h); });
+
+render(); initStore();
+if('serviceWorker' in navigator){ addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
