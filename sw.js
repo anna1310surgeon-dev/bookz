@@ -1,5 +1,5 @@
 /* Bookz service worker: app shell offline, fonts/CDN cached, Supabase images cached; API calls go to the network. */
-const VERSION = 'bookz-v2';
+const VERSION = 'bookz-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js'];
 self.addEventListener('install', e => {
