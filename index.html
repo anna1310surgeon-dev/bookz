@@ -754,9 +754,10 @@ const ui={view:'home', prevView:'home', bookId:null, list:'classics', q:'', era:
 const SB_URL='https://lehmxqwpwccuuvcnobyk.supabase.co', SB_KEY='sb_publishable_ZXdHyYSClHPESnf9ICv48g_YTTDdmEc', OWNER='anna1310surgeon@gmail.com';
 const IMG_BASE=SB_URL+'/storage/v1/object/public/images/';
 const CK='bookz-cache-v1';
-let sb=null, me=null, outbox={}, since='1970-01-01T00:00:00Z', flushing=false;
+let sb=null, me=null, outbox={}, since='1970-01-01T00:00:00Z', flushing=false, retryT=null;
 function loadCache(){ try{ const c=JSON.parse(localStorage.getItem(CK)||'null'); if(c){ docs=c.docs||{}; outbox=c.outbox||{}; since=c.since||since; return true; } }catch(e){} return false; }
-function saveCache(){ try{ localStorage.setItem(CK,JSON.stringify({docs,outbox,since})); }catch(e){} }
+let cacheFull=false;
+function saveCache(){ try{ localStorage.setItem(CK,JSON.stringify({docs,outbox,since})); if(cacheFull){ cacheFull=false; } }catch(e){ if(!cacheFull){ cacheFull=true; setTimeout(render,0); } } }
 function persist(id){ outbox[id]=Date.now(); saveCache(); flush(); }
 const setDoc=(id,v)=>{ docs[id]=v; persist(id); };
 const delDoc=id=>{ delete docs[id]; persist(id); };
@@ -766,12 +767,35 @@ async function flush(){
   try{ const rows=ids.map(id=>docs[id]?{user_id:me,id,data:docs[id],deleted:false}:{user_id:me,id,data:null,deleted:true});
     const {error}=await sb.from('docs').upsert(rows,{onConflict:'user_id,id'});
     if(error) throw error;
-    for(const id of ids) if(outbox[id]===stamps[id]) delete outbox[id]; saveCache(); if(mode==='offline'){ mode='cloud'; render(); }
-  }catch(e){ if(navigator.onLine) toast('Не получилось синхронизировать — попробую ещё раз','err'); }
+    for(const id of ids) if(outbox[id]===stamps[id]) delete outbox[id]; saveCache(); if(mode==='offline'){ mode='cloud'; render(); } uploadPending();
+  }catch(e){ if(mode!=='offline'){ mode='offline'; render(); } clearTimeout(retryT); retryT=setTimeout(()=>{ pull(); flush(); },30000); }
   finally{ flushing=false; if(Object.keys(outbox).some(id=>outbox[id]!==stamps[id])) setTimeout(flush,300); }
 }
-function applyRow(r){ if(!r||!r.id) return; if(r.updated_at&&r.updated_at>since) since=r.updated_at; if(outbox[r.id]) return; if(r.deleted||!r.data) delete docs[r.id]; else if(KINDS.has(r.data.kind)) docs[r.id]=r.data; }
-async function pull(){ if(!sb||!me) return; let from=since; for(let page=0;page<20;page++){ const {data,error}=await sb.from('docs').select('id,data,deleted,updated_at').gt('updated_at',from).order('updated_at').limit(500); if(error){ mode='offline'; render(); return; } for(const r of data) applyRow(r); if(data.length<500) break; from=data[data.length-1].updated_at; } saveCache(); render(); refreshSheet(); }
+function applyRow(r){ if(!r||!r.id) return; if(outbox[r.id]) { if(r.updated_at&&r.updated_at>since) since=r.updated_at; return; }
+  // Realtime drops big fields (rows with inline images): never treat a missing body as a delete — fetch the full row instead
+  if(!r.deleted&&!r.data){ fetchRow(r.id); return; }
+  if(r.updated_at&&r.updated_at>since) since=r.updated_at;
+  if(r.deleted) delete docs[r.id]; else if(KINDS.has(r.data.kind)) docs[r.id]=r.data; }
+async function fetchRow(id){ if(!sb||!me) return; const {data,error}=await sb.from('docs').select('id,data,deleted,updated_at').eq('id',id).maybeSingle(); if(error||!data) return; applyRow(data); saveCache(); render(); refreshSheet(); }
+/* Pictures added while the cloud was unreachable are kept inline (data:) — upload them as soon as it is back */
+let uploadingPics=false;
+const hasInlinePic=d=>/<img[^>]+src="data:image\//.test(d.html||'')||(d.kind==='character'&&/^data:image\//.test(d.image||''));
+const inlinePicCount=()=>Object.values(docs).filter(hasInlinePic).length;
+async function uploadPending(){
+  if(!sb||!me||uploadingPics||!navigator.onLine||mode!=='cloud') return; const ids=Object.keys(docs).filter(id=>hasInlinePic(docs[id])); if(!ids.length) return;
+  uploadingPics=true; let moved=0;
+  try{ for(const id of ids){ const d=docs[id]; let changed=false; const nd={...d};
+      if(d.html&&/src="data:image\//.test(d.html)){ const tpl=document.createElement('template'); tpl.innerHTML=d.html;
+        for(const im of tpl.content.querySelectorAll('img')){ const src=im.getAttribute('src')||''; if(!src.startsWith('data:image/')||im.getAttribute('data-sb')) continue;
+          const blob=await (await fetch(src)).blob(); const path=`${me}/${uid('i')}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'}); if(error) throw error;
+          im.setAttribute('src',IMG_BASE+path); im.setAttribute('data-sb',path); changed=true; moved++; }
+        if(changed) nd.html=sanitize(tpl.innerHTML); }
+      if(d.kind==='character'&&/^data:image\//.test(d.image||'')){ const blob=await (await fetch(d.image)).blob(); const path=`${me}/${uid('h')}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'}); if(error) throw error; nd.image=path; changed=true; moved++; }
+      if(changed&&docs[id]===d) setDoc(id,nd); }
+    if(moved) { render(); toast(moved===1?'Картинка загружена в облако':`Картинки загружены в облако · ${moved}`); }
+  }catch(e){ /* try again on next sync */ }
+  finally{ uploadingPics=false; } }
+async function pull(){ if(!sb||!me) return; let from=since; for(let page=0;page<20;page++){ const {data,error}=await sb.from('docs').select('id,data,deleted,updated_at').gt('updated_at',from).order('updated_at').limit(500); if(error){ mode='offline'; render(); return; } for(const r of data) applyRow(r); if(data.length<500) break; from=data[data.length-1].updated_at; } if(mode==='offline'&&navigator.onLine) mode='cloud'; saveCache(); render(); refreshSheet(); uploadPending(); }
 async function initStore(){
   const had=loadCache(); render();
   const m=location.hash.match(/k=([A-Za-z0-9_-]{20,})/); if(m){ try{ localStorage.setItem('bookz-k',m[1]); }catch(e){} history.replaceState(null,'',location.pathname+'#home'); }
@@ -785,7 +809,7 @@ async function initStore(){
     session=r.data.session; }
   me=session.user.id; mode=navigator.onLine?'cloud':'offline';
   await pull(); flush();
-  sb.channel('docs-'+me).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'user_id=eq.'+me},p=>{ applyRow(p.new); saveCache(); render(); refreshSheet(); }).subscribe();
+  sb.channel('docs-'+me).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'user_id=eq.'+me},p=>{ applyRow(p.new&&p.new.id?p.new:p.old); saveCache(); render(); refreshSheet(); }).subscribe();
   addEventListener('online',()=>{ mode='cloud'; render(); pull(); flush(); });
   addEventListener('offline',()=>{ mode='offline'; render(); });
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ pull(); flush(); } });
@@ -841,7 +865,11 @@ function render(){
     $('keyForm').addEventListener('submit',async ev=>{ ev.preventDefault(); const v=$('keyIn').value.trim(); const m=v.match(/k=([A-Za-z0-9_-]{20,})/)||v.match(/^([A-Za-z0-9_-]{20,})$/); if(!m){ toast('Не похоже на личную ссылку','err'); return; } try{ localStorage.setItem('bookz-k',m[1]); }catch(e){} mode='loading'; render(); initStore(); }); return; }
   $('tabbar').hidden=false;
   const pend=Object.keys(outbox).length; const legacy=Object.values(docs).some(d=>/data-asset=/.test(d.html||''));
-  const banner = (mode==='offline'?`<div class="banner" style="background:var(--lav-50);color:var(--t-brand)">Нет сети — всё работает, ${pend?`${pend} ${plural(pend,'изменение отправится','изменения отправятся','изменений отправятся')}, когда сеть появится`:'изменения отправятся, когда сеть появится'}</div>`:'')
+  const pics=inlinePicCount();
+  const why=navigator.onLine?'Нет связи с облаком':'Нет сети';
+  const banner = (mode==='offline'?`<div class="banner" style="background:var(--lav-50);color:var(--t-brand)">${why} — записи сохраняются на этом устройстве${pend?` · ${pend} ${plural(pend,'изменение ждёт','изменения ждут','изменений ждут')} отправки`:''}${pics?` · картинок на этом устройстве: ${pics}`:''}. Отправлю сама, когда связь вернётся</div>`:'')
+    + (mode!=='offline'&&pics&&me?`<div class="banner" style="background:var(--lav-50);color:var(--t-brand)">Загружаю картинки в облако… осталось ${pics}</div>`:'')
+    + (cacheFull?`<div class="banner" style="background:var(--warn-bg,#FDF2DF);color:var(--warn,#9A5A06)">Память браузера заполнена — не закрывай приложение, пока не появится связь с облаком</div>`:'')
     + (legacy&&me?`<div class="banner" style="background:var(--lav-100);color:var(--t-primary);display:flex;gap:12px;align-items:center"><span class="grow">Картинки из старого Bookz ждут переноса. Загрузи файл <b>bookz-images.json</b></span><button class="btn m primary" type="button" data-act="importImages">Загрузить</button></div>`:'');
   const v = ui.view==='home'?homeView():ui.view==='lists'?listsView():ui.view==='journal'?journalView():bookView();
   const fe=document.activeElement, fid=fe&&fe.id&&$('view').contains(fe)?fe.id:null, sel=fid&&fe.selectionStart!=null?[fe.selectionStart,fe.selectionEnd]:null;
@@ -1341,7 +1369,7 @@ function heroForm(bookId,id){ const ex=id?docs[id]:null; const st={name:ex?.name
       foot:`<button class="btn primary block" type="button" data-sact="save" ${st.busy?'disabled':''}>${ex?'Сохранить':'Сохранить героя'}</button>`}; },
    mount(){ $('hn').oninput=e=>st.name=e.target.value; $('hr').oninput=e=>st.role=e.target.value; mountEditor('hed',h=>st.html=h);
      $('hImg').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; st.busy=true; renderSheet();
-       try{ if(sb&&me&&navigator.onLine){ const blob=await compress(f,800,.85); const path=`${me}/${uid('h')}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'}); if(error) throw error; st.image=path; } else st.image=await toDataUrl(await compress(f,400,.75)); }
+       try{ let ok=false; if(sb&&me&&navigator.onLine&&mode==='cloud'){ try{ const blob=await compress(f,800,.85); const path=`${me}/${uid('h')}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'}); if(error) throw error; st.image=path; ok=true; }catch(e){} } if(!ok) st.image=await toDataUrl(await compress(f,600,.78)); }
        catch(err){ toast('Не удалось добавить картинку','err'); } st.busy=false; renderSheet(); };
      if(!ex) $('hn').focus(); },
    act(a){ if(a==='pickImg') $('hImg').click(); if(a==='noImg'){ st.image=''; renderSheet(); }
@@ -1408,7 +1436,8 @@ function restoreRange(area){ const sel=getSelection(); area.focus(); if(savedRan
 async function compress(file,max,q){ const url=URL.createObjectURL(file); try{ const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url;}); const k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)); const w=Math.round(img.naturalWidth*k), h=Math.round(img.naturalHeight*k); const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(img,0,0,w,h); return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('enc')),'image/jpeg',q)); } finally{ URL.revokeObjectURL(url); } }
 const toDataUrl=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b);});
 async function addImage(file,area,onChange){ if(!file||!/^image\//.test(file.type)) return; toast('Добавляю картинку…');
-  try{ let html; if(sb&&me&&navigator.onLine){ const blob=await compress(file,1600,.85); const path=`${me}/${uid('i')}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'}); if(error) throw error; html=`<img src="${IMG_BASE+path}" data-sb="${path}" alt="">`; } else html=`<img src="${await toDataUrl(await compress(file,900,.72))}" alt="">`;
+  try{ let html=null; if(sb&&me&&navigator.onLine&&mode==='cloud'){ try{ const blob=await compress(file,1600,.85); const path=`${me}/${uid('i')}.jpg`; const {error}=await sb.storage.from('images').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'}); if(error) throw error; html=`<img src="${IMG_BASE+path}" data-sb="${path}" alt="">`; }catch(e){ html=null; } }
+    if(!html) html=`<img src="${await toDataUrl(await compress(file,1200,.78))}" alt="">`;
     if(!document.body.contains(area)) return; restoreRange(area); document.execCommand('insertHTML',false,html+'<p><br></p>'); onChange(area.innerHTML); toast('Картинка добавлена'); }
   catch(e){ toast('Не удалось добавить картинку. Попробуй другой файл','err'); } }
 function mountEditor(id,onChange){ const area=$(id); if(!area) return; try{ document.execCommand('defaultParagraphSeparator',false,'p'); }catch(e){}
